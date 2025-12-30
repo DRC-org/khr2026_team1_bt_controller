@@ -105,6 +105,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!isDeviceConnected) {
+      setLastProcessedIdx(-1);
+      return;
+    }
+
     for (let i = lastProcessedIdx + 1; i < receivedMessages.length; i++) {
       const msg = receivedMessages[i];
       try {
@@ -121,7 +126,7 @@ export default function App() {
     if (receivedMessages.length > 0) {
       setLastProcessedIdx(receivedMessages.length - 1);
     }
-  }, [receivedMessages, lastProcessedIdx]);
+  }, [receivedMessages, lastProcessedIdx, isDeviceConnected]);
 
   return (
     <div className="h-svh touch-none select-none">

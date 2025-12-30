@@ -36,6 +36,7 @@ export function useBluetoothConnect() {
     setIsDeviceConnected(true);
     device.addEventListener('gattserverdisconnected', () => {
       setIsDeviceConnected(false);
+      setReceivedMessages([]);
     });
     setBluetoothDevice(device);
 
