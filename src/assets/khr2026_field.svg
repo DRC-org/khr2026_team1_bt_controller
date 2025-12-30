@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="350"
+   height="700"
+   viewBox="0 0 92.604165 185.20833"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   sodipodi:docname="khr2026_field.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.75811591"
+     inkscape:cx="40.231315"
+     inkscape:cy="357.46513"
+     inkscape:window-width="1440"
+     inkscape:window-height="830"
+     inkscape:window-x="-6"
+     inkscape:window-y="-6"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer2" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="外枠"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:0.583349"
+       id="rect1"
+       width="1.0054166"
+       height="185.20833"
+       x="0"
+       y="0"
+       inkscape:label="外枠_左" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:1.23621"
+       id="rect2"
+       width="92.604164"
+       height="1.0054166"
+       x="0"
+       y="0"
+       inkscape:label="外枠_上" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:0.560019"
+       id="rect3"
+       width="1.0054166"
+       height="185.20833"
+       x="91.598747"
+       y="0"
+       inkscape:label="外枠_右" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:0.570921"
+       id="rect4"
+       width="92.604164"
+       height="1.0054166"
+       x="0"
+       y="184.20291"
+       inkscape:label="外枠_下" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="ラインテープ"
+     style="fill:#999999">
+    <rect
+       style="fill:#999999;fill-opacity:1;stroke-width:1.05172"
+       id="rect14"
+       width="1.3229166"
+       height="136.31334"
+       x="15.5575"
+       y="1.0054166"
+       inkscape:label="陣取り_1" />
+    <rect
+       style="fill:#999999;fill-opacity:1;stroke-width:1.38451"
+       id="rect15"
+       width="15.875"
+       height="1.3229166"
+       x="1.0054166"
+       y="135.99583"
+       inkscape:label="陣取り_2" />
+    <rect
+       style="fill:#999999;stroke-width:0.205364"
+       id="rect16"
+       width="26.458334"
+       height="1.3229166"
+       x="1.0054166"
+       y="157.74458"
+       inkscape:label="櫓_1" />
+    <rect
+       style="fill:#999999;stroke-width:0.204721"
+       id="rect17"
+       width="1.3229166"
+       height="26.458334"
+       x="27.463751"
+       y="157.74458"
+       inkscape:label="櫓_2" />
+    <rect
+       style="fill:#999999;stroke-width:0.145634"
+       id="rect18"
+       width="1.3229166"
+       height="46.884167"
+       x="53.234165"
+       y="137.31876"
+       inkscape:label="中央" />
+    <rect
+       style="fill:#999999;stroke-width:0.11089"
+       id="rect19"
+       width="37.359165"
+       height="1.3229166"
+       x="54.239582"
+       y="26.140833"
+       inkscape:label="リング" />
+    <rect
+       style="fill:#0055d4;stroke-width:0.120057"
+       id="rect20"
+       width="18.520834"
+       height="0.50270832"
+       x="73.077919"
+       y="165.68208"
+       inkscape:label="スタート_1" />
+    <rect
+       style="fill:#0055d4;stroke-width:0.113897"
+       id="rect21"
+       width="0.50270832"
+       height="18.520834"
+       x="73.077919"
+       y="165.68208"
+       inkscape:label="スタート_2" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="木壁">
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:0.479404"
+       id="rect5"
+       width="15.875"
+       height="1.0054166"
+       x="1.0054166"
+       y="26.934584"
+       inkscape:label="陣取り_1" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:0.349025"
+       id="rect6"
+       width="15.875"
+       height="1.0054166"
+       x="1.005496"
+       y="54.927502"
+       inkscape:label="陣取り_2" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:0.439606"
+       id="rect7"
+       width="15.875"
+       height="1.0054166"
+       x="1.0054166"
+       y="82.391251"
+       inkscape:label="陣取り_3" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:0.42141"
+       id="rect8"
+       width="15.875"
+       height="1.0054166"
+       x="1.0054166"
+       y="109.855"
+       inkscape:label="陣取り_4" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:1.30043"
+       id="rect9"
+       width="1.0054166"
+       height="136.31334"
+       x="53.234165"
+       y="1.0054166"
+       inkscape:label="中央" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:0.842378"
+       id="rect10"
+       width="7.3554168"
+       height="1.0054166"
+       x="1.0054166"
+       y="146.36749"
+       inkscape:label="本丸_1" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:2.19421"
+       id="rect11"
+       width="7.3554168"
+       height="1.0054166"
+       x="1.0054166"
+       y="148.96042"
+       inkscape:label="本丸_2" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:1.22108"
+       id="rect12"
+       width="1.0054166"
+       height="1.5875"
+       x="7.3554168"
+       y="147.37291"
+       inkscape:label="本丸_3" />
+    <rect
+       style="fill:#dfab4c;fill-opacity:1;stroke-width:1.37757"
+       id="rect13"
+       width="1.0054166"
+       height="1.5875"
+       x="4.7624998"
+       y="147.37291"
+       inkscape:label="本丸_4" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="要素">
+    <circle
+       style="fill:#008080;fill-opacity:1;stroke-width:1.63882"
+       id="path13"
+       cx="6.5616665"
+       cy="148.16667"
+       r="0.79374999"
+       inkscape:label="本丸" />
+  </g>
+</svg>
