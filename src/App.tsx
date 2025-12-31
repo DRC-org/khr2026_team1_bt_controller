@@ -3,7 +3,7 @@ import { BluetoothConnected, BluetoothOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
-import JoystickFields from '@/components/JoystickFields';
+// import JoystickFields from '@/components/JoystickFields';
 import { Button } from '@/components/ui/button';
 import { useBluetoothConnect } from '@/hooks/useBluetoothConnect';
 import { useDisableContextMenu } from '@/hooks/useDisableContextMenu';
@@ -26,9 +26,9 @@ export default function App() {
   } = useBluetoothConnect();
 
   const {
-    joystickLFields,
+    // joystickLFields,
     setJoystickLFields,
-    joystickRFields,
+    // joystickRFields,
     setJoystickRFields,
   } = useJoystickFields((joystickLFields, joystickRFields) => {
     if (bluetoothTxCharacteristic === undefined) return;
