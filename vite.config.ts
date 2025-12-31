@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/khr2026_team1_bt_controller/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
