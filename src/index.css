@@ -4,11 +4,15 @@
 /* Inter font */
 :root {
   font-family: Inter, sans-serif;
-  font-feature-settings: 'liga' 1, 'calt' 1; /* fix for Chrome */
+  font-feature-settings:
+    "liga" 1,
+    "calt" 1; /* fix for Chrome */
 }
 
 @supports (font-variation-settings: normal) {
-  :root { font-family: InterVariable, sans-serif; }
+  :root {
+    font-family: InterVariable, sans-serif;
+  }
 }
 
 /* Make the cursor a pointer on buttons */
@@ -104,7 +108,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.59 0.20 277);
+  --primary: oklch(0.59 0.2 277);
   --primary-foreground: oklch(0.96 0.02 272);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);

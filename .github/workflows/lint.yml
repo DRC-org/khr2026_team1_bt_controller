@@ -1,0 +1,21 @@
+name: Lint Codebase
+
+on: push
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 10
+          cache: true
+      - name: Install dependencies
+        run: pnpm i --frozen-lockfile
+      - name: Run linter
+        run: pnpm lint
