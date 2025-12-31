@@ -185,71 +185,71 @@ export default function App() {
         </Button>
       </div>
 
-      <div className="-translate-y-1/2 pointer-events-none absolute top-3/7 left-5 z-10 flex items-center gap-3">
-        <div className="flex flex-col gap-3">
+      <div className="pointer-events-none absolute top-1/3 left-5 z-10 flex w-[calc(50%-20svh-2.5rem)] -translate-y-1/2 items-center gap-3">
+        <div className="flex flex-1 flex-col gap-3">
           <OpButton target="yagura">
             <ArrowUp className="size-6" />
           </OpButton>
-          <OpButton target="yagura" className="h-16">
-            <Square className="size-6" />
+          <OpButton target="yagura" className="h-18">
+            <Square className="size-5" />
           </OpButton>
           <OpButton target="yagura">
             <ArrowDown className="size-6" />
           </OpButton>
         </div>
-        <div className="flex flex-col gap-3">
-          <OpButton target="yagura" className="w-24">
+        <div className="flex flex-1 flex-col gap-3">
+          <OpButton target="yagura">
             <Maximize2 className="size-6" />
             Open
           </OpButton>
-          <OpButton target="yagura" className="w-24">
+          <OpButton target="yagura">
             <Minimize2 className="size-6" />
             Close
           </OpButton>
         </div>
-        <div className="flex flex-col gap-3">
-          <OpButton target="ring" className="w-24">
-            <Dice1 className="size-6" />
-            Grab
+        <div className="flex flex-1 flex-col gap-3">
+          <OpButton target="ring">
+            <Maximize2 className="size-6" />
+            Open
           </OpButton>
-          <OpButton target="ring" className="w-24">
-            <Dice2 className="size-6" />
-            Rel. 25
-          </OpButton>
-          <OpButton target="ring" className="w-24">
-            <Dice3 className="size-6" />
-            Rel. 50
+          <OpButton target="ring">
+            <Minimize2 className="size-6" />
+            Close
           </OpButton>
         </div>
       </div>
 
-      <div className="-translate-y-1/2 pointer-events-none absolute top-3/7 right-5 z-10 flex items-center gap-3">
-        <div className="flex flex-col gap-3">
-          <OpButton target="ring" className="w-24">
+      <div className="pointer-events-none absolute top-1/3 right-5 z-10 flex w-[calc(50%-20svh-2.5rem)] -translate-y-1/2 items-center gap-3">
+        <div className="flex flex-1 flex-col gap-3">
+          <OpButton target="ring">
+            <Dice1 className="size-6" />
+            Grab
+          </OpButton>
+          <OpButton target="ring">
+            <Dice2 className="size-6" />
+            Rel. 25
+          </OpButton>
+          <OpButton target="ring">
+            <Dice3 className="size-6" />
+            Rel. 50
+          </OpButton>
+        </div>
+        <div className="flex flex-1 flex-col gap-3">
+          <OpButton target="yagura">
             <Maximize2 className="size-6" />
             Open
           </OpButton>
-          <OpButton target="ring" className="w-24">
+          <OpButton target="yagura">
             <Minimize2 className="size-6" />
             Close
           </OpButton>
         </div>
-        <div className="flex flex-col gap-3">
-          <OpButton target="yagura" className="w-24">
-            <Maximize2 className="size-6" />
-            Open
-          </OpButton>
-          <OpButton target="yagura" className="w-24">
-            <Minimize2 className="size-6" />
-            Close
-          </OpButton>
-        </div>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-1 flex-col gap-3">
           <OpButton target="yagura">
             <ArrowUp className="size-6" />
           </OpButton>
-          <OpButton target="yagura" className="h-16">
-            <Square className="size-6" />
+          <OpButton target="yagura" className="h-18">
+            <Square className="size-5" />
           </OpButton>
           <OpButton target="yagura">
             <ArrowDown className="size-6" />

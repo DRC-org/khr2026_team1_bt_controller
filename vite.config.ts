@@ -13,8 +13,6 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: [
-      'configuration-thriller-reviewing-everywhere.trycloudflare.com',
-    ],
+    allowedHosts: ['tennessee-pine-ext-farmer.trycloudflare.com'],
   },
 });

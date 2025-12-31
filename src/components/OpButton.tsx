@@ -3,11 +3,11 @@ import type { ComponentProps } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const opButtonVariants = cva('pointer-events-auto', {
+const opButtonVariants = cva('h-24 w-full pointer-events-auto', {
   variants: {
     target: {
-      yagura: 'size-20 text-green-900 bg-green-600/30 hover:bg-green-600/50',
-      ring: 'size-20 text-amber-900 bg-amber-600/30 hover:bg-amber-600/50',
+      yagura: 'text-green-900 bg-green-600/30 hover:bg-green-600/50',
+      ring: 'text-amber-900 bg-amber-600/30 hover:bg-amber-600/50',
     },
   },
 });
