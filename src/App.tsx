@@ -1,8 +1,20 @@
 import JoystickController from 'joystick-controller';
-import { BluetoothConnected, BluetoothOff } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  BluetoothConnected,
+  BluetoothOff,
+  Dice1,
+  Dice2,
+  Dice3,
+  Maximize2,
+  Minimize2,
+  Square,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
+import OpButton from '@/components/OpButton';
 // import JoystickFields from '@/components/JoystickFields';
 import { Button } from '@/components/ui/button';
 import { useBluetoothConnect } from '@/hooks/useBluetoothConnect';
@@ -152,7 +164,7 @@ export default function App() {
       <div className="p-3">
         <Button
           variant="secondary"
-          className="relative z-10 flex w-fit items-center gap-0 font-normal"
+          className="relative z-10 font-normal"
           onClick={isDeviceConnected ? disconnect : searchDevice}
         >
           {isDeviceConnected ? (
@@ -160,7 +172,7 @@ export default function App() {
           ) : (
             <BluetoothOff className="size-5 text-destructive" />
           )}
-          <p className="mr-1 ml-2 font-medium">
+          <p className="-mr-1 font-medium">
             {isDeviceConnected ? 'Connected' : 'Disconnected'}
           </p>
           <p>
@@ -173,11 +185,83 @@ export default function App() {
         </Button>
       </div>
 
+      <div className="-translate-y-1/2 pointer-events-none absolute top-3/7 left-5 z-10 flex items-center gap-3">
+        <div className="flex flex-col gap-3">
+          <OpButton target="yagura">
+            <ArrowUp className="size-6" />
+          </OpButton>
+          <OpButton target="yagura" className="h-16">
+            <Square className="size-6" />
+          </OpButton>
+          <OpButton target="yagura">
+            <ArrowDown className="size-6" />
+          </OpButton>
+        </div>
+        <div className="flex flex-col gap-3">
+          <OpButton target="yagura" className="w-24">
+            <Maximize2 className="size-6" />
+            Open
+          </OpButton>
+          <OpButton target="yagura" className="w-24">
+            <Minimize2 className="size-6" />
+            Close
+          </OpButton>
+        </div>
+        <div className="flex flex-col gap-3">
+          <OpButton target="ring" className="w-24">
+            <Dice1 className="size-6" />
+            Grab
+          </OpButton>
+          <OpButton target="ring" className="w-24">
+            <Dice2 className="size-6" />
+            Rel. 25
+          </OpButton>
+          <OpButton target="ring" className="w-24">
+            <Dice3 className="size-6" />
+            Rel. 50
+          </OpButton>
+        </div>
+      </div>
+
+      <div className="-translate-y-1/2 pointer-events-none absolute top-3/7 right-5 z-10 flex items-center gap-3">
+        <div className="flex flex-col gap-3">
+          <OpButton target="ring" className="w-24">
+            <Maximize2 className="size-6" />
+            Open
+          </OpButton>
+          <OpButton target="ring" className="w-24">
+            <Minimize2 className="size-6" />
+            Close
+          </OpButton>
+        </div>
+        <div className="flex flex-col gap-3">
+          <OpButton target="yagura" className="w-24">
+            <Maximize2 className="size-6" />
+            Open
+          </OpButton>
+          <OpButton target="yagura" className="w-24">
+            <Minimize2 className="size-6" />
+            Close
+          </OpButton>
+        </div>
+        <div className="flex flex-col gap-3">
+          <OpButton target="yagura">
+            <ArrowUp className="size-6" />
+          </OpButton>
+          <OpButton target="yagura" className="h-16">
+            <Square className="size-6" />
+          </OpButton>
+          <OpButton target="yagura">
+            <ArrowDown className="size-6" />
+          </OpButton>
+        </div>
+      </div>
+
       <div className="pointer-events-none absolute inset-0 m-auto h-fit w-fit bg-white">
         <img src={FieldSvg} alt="Field" className="h-[80svh] w-auto" />
         <img
           src={KumaSvg}
-          alt="Kuma"
+          alt="RoboKuma"
           className="translate-1/2 absolute size-[6svh]"
           style={{
             bottom: `calc(${robotPosY} / 7000 * 80svh)`,
