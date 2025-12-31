@@ -119,7 +119,7 @@ export default function App() {
           setRobotPosY(data.y);
           setRobotAngle(data.angle);
         }
-      } catch (e) {
+      } catch (_e) {
         console.error('Invalid JSON message:', msg);
       }
     }
@@ -195,7 +195,7 @@ export default function App() {
           Move
         </div>
       </div>
-      <div className="-z-10 absolute top-0 left-1/2 h-svh w-0 border-primary border-r border-dashed" />
+      <div className="absolute top-0 left-1/2 -z-10 h-svh w-0 border-primary border-r border-dashed" />
       <div
         id="joystick-r-field"
         className="absolute top-0 right-0 h-svh w-1/2 cursor-grab"

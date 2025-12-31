@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "pnpm exec biome check .",
-    "lint:fix": "pnpm exec biome format . --write",
+    "lint:fix": "pnpm run lint --write",
     "preview": "vite preview"
   },
   "dependencies": {

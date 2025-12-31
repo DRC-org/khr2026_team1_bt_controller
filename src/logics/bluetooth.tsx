@@ -3,6 +3,7 @@ const TX_CHARACTERISTIC_UUID = '47153006-9eef-45e5-afb7-038ea60ad893';
 const RX_CHARACTERISTIC_UUID = '3ecd3272-0f80-4518-ad58-78aa9af3ec9d';
 
 export async function sendJsonData(
+  // biome-ignore lint/complexity/noBannedTypes: Temporary object type
   data: Object,
   txCharacteristic: BluetoothRemoteGATTCharacteristic,
 ) {
