@@ -45,19 +45,14 @@ export default function App() {
   } = useJoystickFields((joystickLFields, joystickRFields) => {
     if (bluetoothTxCharacteristic === undefined) return;
 
-    const txDataL = {
+    const txData = {
       type: 'joystick',
-      side: 'l',
-      ...joystickLFields,
-    };
-    const txDataR = {
-      type: 'joystick',
-      side: 'r',
-      ...joystickRFields,
+      l_x: joystickLFields.x,
+      l_y: joystickLFields.y,
+      r: joystickRFields.x,
     };
     (async () => {
-      await sendJsonData(txDataL, bluetoothTxCharacteristic);
-      await sendJsonData(txDataR, bluetoothTxCharacteristic);
+      await sendJsonData([txData], bluetoothTxCharacteristic);
     })();
   });
 
@@ -78,12 +73,8 @@ export default function App() {
       },
       (data) => {
         setJoystickLFields({
-          x: data.x,
-          y: data.y,
-          leveledX: data.leveledX,
-          leveledY: data.leveledY,
-          distance: data.distance,
-          angle: data.angle,
+          x: data.leveledX,
+          y: data.leveledY,
         });
       },
     );
@@ -101,12 +92,7 @@ export default function App() {
       },
       (data) => {
         setJoystickRFields({
-          x: data.x,
-          y: data.y,
-          leveledX: data.leveledX,
-          leveledY: data.leveledY,
-          distance: data.distance,
-          angle: data.angle,
+          x: data.leveledX,
         });
       },
     );

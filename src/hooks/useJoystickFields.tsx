@@ -7,36 +7,18 @@ export function useJoystickFields(
     joystickLFields: {
       x: number;
       y: number;
-      leveledX: number;
-      leveledY: number;
-      distance: number;
-      angle: number;
     },
     joystickRFields: {
       x: number;
-      y: number;
-      leveledX: number;
-      leveledY: number;
-      distance: number;
-      angle: number;
     },
   ) => void,
 ) {
   const [joystickLFields, setJoystickLFields] = useState({
     x: 0,
     y: 0,
-    leveledX: 0,
-    leveledY: 0,
-    distance: 0,
-    angle: 0,
   });
   const [joystickRFields, setJoystickRFields] = useState({
     x: 0,
-    y: 0,
-    leveledX: 0,
-    leveledY: 0,
-    distance: 0,
-    angle: 0,
   });
   const joystickLFieldsRef = useRef(joystickLFields);
   const joystickRFieldsRef = useRef(joystickRFields);
