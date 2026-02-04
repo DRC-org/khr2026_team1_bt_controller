@@ -13,6 +13,6 @@ export default defineConfig({
     },
   },
   server: {
-    allowedHosts: ['tennessee-pine-ext-farmer.trycloudflare.com'],
+    allowedHosts: ['arrested-studio-forty-politics.trycloudflare.com'],
   },
 });

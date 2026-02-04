@@ -1,13 +1,21 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { HashRouter, Route, Routes } from 'react-router';
+import Controller from '@/routes/Controller';
+import PIDTuning from '@/routes/PIDTuning';
+
 import '@/index.css';
-import App from '@/App.tsx';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
-      <App />
+      <HashRouter>
+        <Routes>
+          <Route path="/" element={<Controller />} />
+          <Route path="/pid-tuning" element={<PIDTuning />} />
+        </Routes>
+      </HashRouter>
     </StrictMode>,
   );
 }

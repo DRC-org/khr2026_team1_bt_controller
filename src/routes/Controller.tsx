@@ -22,7 +22,7 @@ import { useDisableContextMenu } from '@/hooks/useDisableContextMenu';
 import { useJoystickFields } from '@/hooks/useJoystickFields';
 import { sendJsonData } from '@/logics/bluetooth';
 
-export default function App() {
+export default function Controller() {
   const [robotPosX, setRobotPosX] = useState(388);
   const [robotPosY, setRobotPosY] = useState(388);
   const [robotAngle, setRobotAngle] = useState(0);
