@@ -59,9 +59,11 @@ export default function App() {
   });
 
   // ROS path visualization
-  const { pathData, currentPose, connected: rosConnected } = useROSPath(
-    'ws://localhost:9090',
-  );
+  const {
+    pathData,
+    currentPose,
+    connected: rosConnected,
+  } = useROSPath('ws://localhost:9090');
   const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
 
   useDisableContextMenu();
@@ -73,7 +75,7 @@ export default function App() {
       // ROS X (0.3m) -> UI X (300)
       setRobotPosX(currentPose.position.x * 1000);
       setRobotPosY(currentPose.position.y * 1000);
-      
+
       // Calculate angle from quaternion if needed, but for now fixed or 0
       // const q = currentPose.orientation;
       // const angle = Math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z));

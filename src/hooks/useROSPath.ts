@@ -70,12 +70,15 @@ export function useROSPath(rosbridgeUrl: string) {
       messageType: 'geometry_msgs/PoseStamped',
     });
 
+    interface PoseStampedMessage {
+      pose: RobotPose;
+    }
+
     poseTopic.subscribe((message: unknown) => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const msg = message as any;
+        const msg = message as PoseStampedMessage;
         if (msg.pose) {
-             setCurrentPose(msg.pose);
+          setCurrentPose(msg.pose);
         }
       } catch (error) {
         console.error('❌ Failed to parse pose data:', error);

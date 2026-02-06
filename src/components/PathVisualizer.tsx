@@ -50,16 +50,16 @@ export function PathVisualizer({
     if (!spot) return { x: 0, y: 0, id: spotId, name: 'Unknown', index };
 
     let pos = fieldToPixel(spot.x, spot.y, mapWidth, mapHeight);
-    
+
     // Create a unique key for this coordinate
     const key = `${Math.round(pos.x)},${Math.round(pos.y)}`;
     const count = coordCounts.get(key) || 0;
-    
+
     // If revisited, offset the position slightly to avoid overlap
     if (count > 0) {
       pos = { ...pos, x: pos.x + count * 25 }; // Offset by 25px to the right
     }
-    
+
     coordCounts.set(key, count + 1);
 
     return { id: spotId, index, name: spot.name, ...pos };
