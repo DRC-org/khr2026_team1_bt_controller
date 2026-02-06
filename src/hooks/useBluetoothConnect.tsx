@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   fetchRxCharacteristic,
   fetchTxCharacteristic,
   searchDevice as searchBtDevice,
 } from '@/logics/bluetooth';
+
+type MessageCallback = (message: string) => void;
 
 export function useBluetoothConnect() {
   const [bluetoothDevice, setBluetoothDevice] = useState<BluetoothDevice>();
@@ -12,7 +14,12 @@ export function useBluetoothConnect() {
     useState<BluetoothRemoteGATTCharacteristic>();
   const [bluetoothRxCharacteristic, setBluetoothRxCharacteristic] =
     useState<BluetoothRemoteGATTCharacteristic>();
-  const [receivedMessages, setReceivedMessages] = useState<string[]>([]);
+
+  const messageCallbackRef = useRef<MessageCallback | null>(null);
+
+  const onMessage = useCallback((callback: MessageCallback) => {
+    messageCallbackRef.current = callback;
+  }, []);
 
   function disconnect() {
     if (!confirm('Are you sure you want to disconnect?')) return;
@@ -38,7 +45,6 @@ export function useBluetoothConnect() {
       setIsDeviceConnected(false);
       setBluetoothTxCharacteristic(undefined);
       setBluetoothRxCharacteristic(undefined);
-      setReceivedMessages([]);
     });
     setBluetoothDevice(device);
 
@@ -59,12 +65,7 @@ export function useBluetoothConnect() {
           const message = decoder.decode(
             (event.target as BluetoothRemoteGATTCharacteristic).value,
           );
-          setReceivedMessages((prev) => [...prev, message]);
-
-          // Keep only the latest 100 messages
-          if (receivedMessages.length > 100) {
-            setReceivedMessages((prev) => prev.slice(-100));
-          }
+          messageCallbackRef.current?.(message);
         },
       );
       await rxCharacteristic.startNotifications();
@@ -76,7 +77,7 @@ export function useBluetoothConnect() {
     isDeviceConnected,
     bluetoothTxCharacteristic,
     bluetoothRxCharacteristic,
-    receivedMessages,
+    onMessage,
     searchDevice,
     disconnect,
   };

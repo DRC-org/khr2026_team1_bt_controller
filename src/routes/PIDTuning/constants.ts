@@ -29,6 +29,6 @@ export const SINGLE_LINE_COLOR = 'rgb(59, 130, 246)';
 
 export const CHART_CONFIG = {
   duration: 10000,
-  refresh: 50,
+  refresh: 100,
   tension: 0.3,
 } as const;

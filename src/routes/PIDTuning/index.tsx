@@ -5,38 +5,67 @@ import {
 } from '@nckrtl/chartjs-plugin-streaming';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { BluetoothConnected, BluetoothOff } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Button } from '@/components/ui/button';
 import { useBluetoothConnect } from '@/hooks/useBluetoothConnect';
+import { sendJsonData } from '@/logics/bluetooth';
 import { MotorSelector } from './MotorSelector';
+import { PIDGainControls } from './PIDGainControls';
 import { SmallChart } from './SmallChart';
-import type { MotorKey } from './types';
+import type { MotorKey, PIDGains } from './types';
 import { usePIDCharts } from './usePIDCharts';
 
 ChartJS.register(StreamingPlugin, RealTimeScale, ...registerables);
 
 export default function PIDTuning() {
   const [selectedMotor, setSelectedMotor] = useState<MotorKey>('fl');
+  const [currentGains, setCurrentGains] = useState<PIDGains | undefined>();
 
   const {
     bluetoothDevice,
     isDeviceConnected,
-    receivedMessages,
+    bluetoothTxCharacteristic,
+    onMessage,
     searchDevice,
     disconnect,
   } = useBluetoothConnect();
 
   const { chartRefs, chartData, chartOptions, clearAllCharts } = usePIDCharts(
-    receivedMessages,
+    onMessage,
     isDeviceConnected,
     selectedMotor,
+    setCurrentGains,
   );
 
   const handleMotorChange = (motor: MotorKey) => {
     clearAllCharts();
     setSelectedMotor(motor);
   };
+
+  const handleGainsChange = useCallback(
+    async (gains: PIDGains) => {
+      if (!bluetoothTxCharacteristic) {
+        console.error('Bluetooth not connected');
+        return;
+      }
+
+      const command = {
+        type: 'pid_gains',
+        kp: gains.kp,
+        ki: gains.ki,
+        kd: gains.kd,
+      };
+
+      try {
+        await sendJsonData([command], bluetoothTxCharacteristic);
+        console.log('PID gains sent:', command);
+      } catch (error) {
+        console.error('Failed to send PID gains:', error);
+      }
+    },
+    [bluetoothTxCharacteristic],
+  );
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -68,6 +97,13 @@ export default function PIDTuning() {
           onMotorChange={handleMotorChange}
         />
       </div>
+
+      {/* PID Gain Controls */}
+      <PIDGainControls
+        onGainsChange={handleGainsChange}
+        currentGains={currentGains}
+        disabled={!isDeviceConnected}
+      />
 
       {/* ① PID Terms chart (large) */}
       <div>

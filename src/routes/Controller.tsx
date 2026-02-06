@@ -11,7 +11,7 @@ import {
   Minimize2,
   Square,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
 import OpButton from '@/components/OpButton';
@@ -26,13 +26,12 @@ export default function Controller() {
   const [robotPosX, setRobotPosX] = useState(388);
   const [robotPosY, setRobotPosY] = useState(388);
   const [robotAngle, setRobotAngle] = useState(0);
-  const [lastProcessedIdx, setLastProcessedIdx] = useState(-1);
 
   const {
     bluetoothDevice,
     isDeviceConnected,
     bluetoothTxCharacteristic,
-    receivedMessages,
+    onMessage,
     searchDevice,
     disconnect,
   } = useBluetoothConnect();
@@ -102,29 +101,24 @@ export default function Controller() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!isDeviceConnected) {
-      setLastProcessedIdx(-1);
-      return;
-    }
-
-    for (let i = lastProcessedIdx + 1; i < receivedMessages.length; i++) {
-      const msg = receivedMessages[i];
-      try {
-        const data = JSON.parse(msg);
-        if (data.type === 'robot_pos') {
-          setRobotPosX(data.x);
-          setRobotPosY(data.y);
-          setRobotAngle(data.angle);
-        }
-      } catch (_e) {
-        console.error('Invalid JSON message:', msg);
+  const handleMessage = useCallback((msg: string) => {
+    try {
+      const data = JSON.parse(msg);
+      if (data.type === 'robot_pos') {
+        setRobotPosX(data.x);
+        setRobotPosY(data.y);
+        setRobotAngle(data.angle);
       }
+    } catch (_e) {
+      console.error('Invalid JSON message:', msg);
     }
-    if (receivedMessages.length > 0) {
-      setLastProcessedIdx(receivedMessages.length - 1);
+  }, []);
+
+  useEffect(() => {
+    if (isDeviceConnected) {
+      onMessage(handleMessage);
     }
-  }, [receivedMessages, lastProcessedIdx, isDeviceConnected]);
+  }, [isDeviceConnected, onMessage, handleMessage]);
 
   return (
     <div className="h-svh touch-none select-none">
