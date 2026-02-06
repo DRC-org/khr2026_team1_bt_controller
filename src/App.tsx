@@ -59,31 +59,33 @@ export default function App() {
   });
 
   // ROS path visualization
-  const { pathData, connected: rosConnected } = useROSPath('ws://localhost:9090');
+  const { pathData, connected: rosConnected } = useROSPath(
+    'ws://localhost:9090',
+  );
   const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
 
   useDisableContextMenu();
-  
+
   // Update map dimensions when map ref changes
   useEffect(() => {
     if (!mapRef.current) return;
-    
+
     const updateDimensions = () => {
       if (mapRef.current) {
         setMapDimensions({
           width: mapRef.current.clientWidth,
-          height: mapRef.current.clientHeight
+          height: mapRef.current.clientHeight,
         });
       }
     };
-    
+
     // Initial update
     updateDimensions();
-    
+
     // Update on window resize
     const resizeObserver = new ResizeObserver(updateDimensions);
     resizeObserver.observe(mapRef.current);
-    
+
     return () => {
       resizeObserver.disconnect();
     };
@@ -167,7 +169,7 @@ export default function App() {
     const rect = mapRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
-    
+
     // Calculate coordinates based on display logic
     // X (Short edge, 0-3500): displayed using 'right', so 0 is at right edge, 3500 at left edge.
     // X = (distance from right / width) * 3500
@@ -179,7 +181,9 @@ export default function App() {
     const pixelFromBottom = rect.height - clickY;
     const targetY = (pixelFromBottom / rect.height) * 7000;
 
-    console.log(`Navigating to: X=${Math.round(targetX)}, Y=${Math.round(targetY)}`);
+    console.log(
+      `Navigating to: X=${Math.round(targetX)}, Y=${Math.round(targetY)}`,
+    );
 
     const txData = {
       type: 'navigate',
@@ -317,8 +321,15 @@ export default function App() {
             alt="Field"
             className="pointer-events-auto h-[80svh] w-auto cursor-crosshair"
             onClick={handleMapClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleMapClick(
+                  e as unknown as React.MouseEvent<HTMLImageElement>,
+                );
+              }
+            }}
           />
-          
+
           {/* Path visualization overlay */}
           {pathData && mapDimensions.width > 0 && (
             <div className="absolute inset-0">
@@ -330,7 +341,7 @@ export default function App() {
               />
             </div>
           )}
-          
+
           <img
             src={KumaSvg}
             alt="RoboKuma"
@@ -341,10 +352,10 @@ export default function App() {
               transform: `rotate(${robotAngle}deg)`,
             }}
           />
-          
+
           {/* ROS connection status indicator */}
           {rosConnected && (
-            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+            <div className="absolute top-2 right-2 rounded bg-green-500 px-2 py-1 text-white text-xs">
               ROS Connected
             </div>
           )}

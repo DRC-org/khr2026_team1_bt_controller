@@ -21,7 +21,7 @@ export function useROSPath(rosbridgeUrl: string) {
 
   useEffect(() => {
     const ros = new ROSLIB.Ros({
-      url: rosbridgeUrl
+      url: rosbridgeUrl,
     });
 
     ros.on('connection', () => {
@@ -43,12 +43,13 @@ export function useROSPath(rosbridgeUrl: string) {
     const pathTopic = new ROSLIB.Topic({
       ros: ros,
       name: '/task_planner/planned_path',
-      messageType: 'std_msgs/String'
+      messageType: 'std_msgs/String',
     });
 
-    pathTopic.subscribe((message: any) => {
+    pathTopic.subscribe((message: unknown) => {
       try {
-        const data = JSON.parse(message.data) as PathData;
+        const msg = message as { data: string };
+        const data = JSON.parse(msg.data) as PathData;
         console.log('🗺️ Received new path:', data.path.length, 'waypoints');
         setPathData(data);
       } catch (error) {

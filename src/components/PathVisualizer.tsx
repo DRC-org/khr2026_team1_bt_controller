@@ -15,25 +15,30 @@ interface PathVisualizerProps {
 
 // Convert field coordinates (meters) to pixel position
 function fieldToPixel(
-  fieldX: number,  // meters, 0-3.5
-  fieldY: number,  // meters, 0-7.0
+  fieldX: number, // meters, 0-3.5
+  fieldY: number, // meters, 0-7.0
   mapWidth: number,
-  mapHeight: number
-): { x: number, y: number } {
+  mapHeight: number,
+): { x: number; y: number } {
   // Field: 3.5m x 7.0m
   // X: 0m is at right edge, 3.5m is at left edge
   // Y: 0m is at bottom edge, 7.0m is at top edge
-  
+
   const pixelFromRight = (fieldX / 3.5) * mapWidth;
   const pixelX = mapWidth - pixelFromRight;
-  
+
   const pixelFromBottom = (fieldY / 7.0) * mapHeight;
   const pixelY = mapHeight - pixelFromBottom;
-  
+
   return { x: pixelX, y: pixelY };
 }
 
-export function PathVisualizer({ spots, path, mapWidth, mapHeight }: PathVisualizerProps) {
+export function PathVisualizer({
+  spots,
+  path,
+  mapWidth,
+  mapHeight,
+}: PathVisualizerProps) {
   if (path.length === 0) return null;
 
   // Calculate pixel positions for all spots in path
@@ -48,11 +53,12 @@ export function PathVisualizer({ spots, path, mapWidth, mapHeight }: PathVisuali
       className="pointer-events-none absolute inset-0"
       style={{ width: mapWidth, height: mapHeight }}
     >
+      <title>Robot path visualization</title>
       {/* Draw path lines */}
       {pathPixels.map((point, index) => {
         if (index === 0) return null;
         const prevPoint = pathPixels[index - 1];
-        
+
         return (
           <line
             key={`line-${point.index}-${index}`}
@@ -94,7 +100,7 @@ export function PathVisualizer({ spots, path, mapWidth, mapHeight }: PathVisuali
             stroke="white"
             strokeWidth="2"
           />
-          
+
           {/* Order number */}
           <circle
             cx={point.x}
@@ -114,7 +120,7 @@ export function PathVisualizer({ spots, path, mapWidth, mapHeight }: PathVisuali
           >
             {point.index + 1}
           </text>
-          
+
           {/* Spot name */}
           <text
             x={point.x}
