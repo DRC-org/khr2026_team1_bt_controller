@@ -108,7 +108,17 @@ export default function App() {
     };
   }, []);
 
+  const [showJoystick, setShowJoystick] = useState(true);
+
   useEffect(() => {
+    if (!showJoystick) return;
+    
+    // Ensure DOM is ready
+    const leftZone = document.getElementById('joystick-l-field');
+    const rightZone = document.getElementById('joystick-r-field');
+    
+    if (!leftZone || !rightZone) return;
+
     const joystickL = new JoystickController(
       {
         maxRange: 140,
@@ -119,7 +129,7 @@ export default function App() {
         controllerClass: 'border-2 border-blue-500 !bg-none',
         joystickClass: '!bg-blue-500 !bg-none',
         dynamicPosition: true,
-        dynamicPositionTarget: document.getElementById('joystick-l-field'),
+        dynamicPositionTarget: leftZone,
       },
       (data) => {
         setJoystickLFields({
@@ -138,7 +148,7 @@ export default function App() {
         controllerClass: 'border-2 border-blue-500 !bg-none',
         joystickClass: '!bg-blue-500 !bg-none',
         dynamicPosition: true,
-        dynamicPositionTarget: document.getElementById('joystick-r-field'),
+        dynamicPositionTarget: rightZone,
       },
       (data) => {
         setJoystickRFields({
@@ -149,6 +159,31 @@ export default function App() {
     return () => {
       joystickL.destroy();
       joystickR.destroy();
+    };
+  }, [showJoystick]); // Re-run when toggled
+
+  // Update map dimensions when map ref changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const updateDimensions = () => {
+      if (mapRef.current) {
+        setMapDimensions({
+          width: mapRef.current.clientWidth,
+          height: mapRef.current.clientHeight,
+        });
+      }
+    };
+
+    // Initial update
+    updateDimensions();
+
+    // Update on window resize
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    resizeObserver.observe(mapRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
     };
   }, []);
 
@@ -215,26 +250,7 @@ export default function App() {
 
   return (
     <div className="h-svh touch-none select-none">
-      {/* <JoystickFields
-        label="left"
-        x={joystickLFields.x.toString()}
-        y={joystickLFields.y.toString()}
-        leveledX={joystickLFields.leveledX.toString()}
-        leveledY={joystickLFields.leveledY.toString()}
-        distance={joystickLFields.distance.toString()}
-        angle={joystickLFields.angle.toString()}
-      />
-      <JoystickFields
-        label="right"
-        x={joystickRFields.x.toString()}
-        y={joystickRFields.y.toString()}
-        leveledX={joystickRFields.leveledX.toString()}
-        leveledY={joystickRFields.leveledY.toString()}
-        distance={joystickRFields.distance.toString()}
-        angle={joystickRFields.angle.toString()}
-      /> */}
-
-      <div className="p-3">
+      <div className="p-3 flex items-center gap-2">
         <Button
           variant="secondary"
           className="relative z-10 font-normal"
@@ -255,6 +271,14 @@ export default function App() {
               : 'N/A'}
             )
           </p>
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          className="relative z-10"
+          onClick={() => setShowJoystick(!showJoystick)}
+        >
+          {showJoystick ? 'Hide Stick' : 'Show Stick'}
         </Button>
       </div>
 
@@ -379,23 +403,27 @@ export default function App() {
         </div>
       </div>
 
-      <div
-        id="joystick-l-field"
-        className="absolute top-0 left-0 h-svh w-1/2 cursor-grab"
-      >
-        <div className="absolute inset-x-0 bottom-4 text-center text-primary">
-          Move
-        </div>
-      </div>
-      <div className="absolute top-0 left-1/2 -z-10 h-svh w-0 border-primary border-r border-dashed" />
-      <div
-        id="joystick-r-field"
-        className="absolute top-0 right-0 h-svh w-1/2 cursor-grab"
-      >
-        <div className="absolute inset-x-0 bottom-4 text-center text-primary">
-          Turn
-        </div>
-      </div>
+      {showJoystick && (
+        <>
+          <div
+            id="joystick-l-field"
+            className="absolute top-0 left-0 h-svh w-1/2 cursor-grab"
+          >
+            <div className="absolute inset-x-0 bottom-4 text-center text-primary">
+              Move
+            </div>
+          </div>
+          <div className="absolute top-0 left-1/2 -z-10 h-svh w-0 border-primary border-r border-dashed" />
+          <div
+            id="joystick-r-field"
+            className="absolute top-0 right-0 h-svh w-1/2 cursor-grab"
+          >
+            <div className="absolute inset-x-0 bottom-4 text-center text-primary">
+              Turn
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
