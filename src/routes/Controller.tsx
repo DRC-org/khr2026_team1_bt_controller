@@ -158,7 +158,7 @@ export default function Controller() {
           ) : (
             <BluetoothOff className="size-5 text-destructive" />
           )}
-          <p className="-mr-1 font-medium">
+          <p className="-mr-1 font-bold">
             {isDeviceConnected ? 'Connected' : 'Disconnected'}
           </p>
           <p>

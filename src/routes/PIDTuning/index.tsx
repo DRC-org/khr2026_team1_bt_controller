@@ -51,11 +51,15 @@ export default function PIDTuning() {
           ) : (
             <BluetoothOff className="size-5 text-destructive" />
           )}
-          <p className="-mr-1 font-medium">
+          <p className="-mr-1 font-bold">
             {isDeviceConnected ? 'Connected' : 'Disconnected'}
           </p>
           <p>
-            ({bluetoothDevice ? bluetoothDevice.name || bluetoothDevice.id : 'N/A'})
+            (
+            {bluetoothDevice
+              ? bluetoothDevice.name || bluetoothDevice.id
+              : 'N/A'}
+            )
           </p>
         </Button>
 
@@ -67,7 +71,7 @@ export default function PIDTuning() {
 
       {/* ① PID Terms chart (large) */}
       <div>
-        <h3 className="mb-2 font-medium text-sm">P, I, D Terms</h3>
+        <h3 className="mb-2 font-bold text-sm">P, I, D Terms</h3>
         <div className="h-60 w-full">
           <Line
             ref={chartRefs.pidTerms}
@@ -79,7 +83,7 @@ export default function PIDTuning() {
 
       {/* ② RPM Compare chart (large) */}
       <div>
-        <h3 className="mb-2 font-medium text-sm">Target vs Current RPM</h3>
+        <h3 className="mb-2 font-bold text-sm">Target vs Current RPM</h3>
         <div className="h-60 w-full">
           <Line
             ref={chartRefs.rpmCompare}

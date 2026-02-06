@@ -16,9 +16,9 @@ export default function Index() {
             <Gamepad2 />
           </ItemMedia>
           <ItemContent>
-            <ItemTitle>Controller</ItemTitle>
+            <ItemTitle className="font-bold">Controller</ItemTitle>
             <ItemDescription>
-              Control the robot's movements and actions in real-time.
+              ロボットを半自動でコントロールする
             </ItemDescription>
           </ItemContent>
         </a>
@@ -30,11 +30,8 @@ export default function Index() {
             <SlidersVertical />
           </ItemMedia>
           <ItemContent>
-            <ItemTitle>PID Tuning</ItemTitle>
-            <ItemDescription>
-              Monitor and adjust the PID parameters for optimal motor
-              performance.
-            </ItemDescription>
+            <ItemTitle className="font-bold">PID Tuning</ItemTitle>
+            <ItemDescription>足回りの PID ゲインを調整する</ItemDescription>
           </ItemContent>
         </a>
       </Item>

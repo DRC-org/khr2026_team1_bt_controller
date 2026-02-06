@@ -17,7 +17,7 @@ export function SmallChart({
 }: SmallChartProps) {
   return (
     <div>
-      <h3 className="mb-1 font-medium text-xs">{title}</h3>
+      <h3 className="mb-1 font-bold text-xs">{title}</h3>
       <div className="h-32">
         <Line ref={chartRef} data={data} options={options} />
       </div>
