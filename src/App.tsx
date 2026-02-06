@@ -11,15 +11,17 @@ import {
   Minimize2,
   Square,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
 import OpButton from '@/components/OpButton';
+import { PathVisualizer } from '@/components/PathVisualizer';
 // import JoystickFields from '@/components/JoystickFields';
 import { Button } from '@/components/ui/button';
 import { useBluetoothConnect } from '@/hooks/useBluetoothConnect';
 import { useDisableContextMenu } from '@/hooks/useDisableContextMenu';
 import { useJoystickFields } from '@/hooks/useJoystickFields';
+import { useROSPath } from '@/hooks/useROSPath';
 import { sendJsonData } from '@/logics/bluetooth';
 
 export default function App() {
@@ -56,7 +58,36 @@ export default function App() {
     })();
   });
 
+  // ROS path visualization
+  const { pathData, connected: rosConnected } = useROSPath('ws://localhost:9090');
+  const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
+
   useDisableContextMenu();
+  
+  // Update map dimensions when map ref changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+    
+    const updateDimensions = () => {
+      if (mapRef.current) {
+        setMapDimensions({
+          width: mapRef.current.clientWidth,
+          height: mapRef.current.clientHeight
+        });
+      }
+    };
+    
+    // Initial update
+    updateDimensions();
+    
+    // Update on window resize
+    const resizeObserver = new ResizeObserver(updateDimensions);
+    resizeObserver.observe(mapRef.current);
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const joystickL = new JoystickController(
@@ -102,6 +133,8 @@ export default function App() {
     };
   }, []);
 
+  const mapRef = useRef<HTMLImageElement>(null);
+
   useEffect(() => {
     if (!isDeviceConnected) {
       setLastProcessedIdx(-1);
@@ -125,6 +158,39 @@ export default function App() {
       setLastProcessedIdx(receivedMessages.length - 1);
     }
   }, [receivedMessages, lastProcessedIdx, isDeviceConnected]);
+
+  const handleMapClick = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (!mapRef.current || !bluetoothTxCharacteristic) return;
+
+    if (!confirm('この場所に移動しますか？')) return;
+
+    const rect = mapRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    
+    // Calculate coordinates based on display logic
+    // X (Short edge, 0-3500): displayed using 'right', so 0 is at right edge, 3500 at left edge.
+    // X = (distance from right / width) * 3500
+    const pixelFromRight = rect.width - clickX;
+    const targetX = (pixelFromRight / rect.width) * 3500;
+
+    // Y (Long edge, 0-7000): displayed using 'bottom', so 0 is at bottom edge, 7000 at top edge.
+    // Y = (distance from bottom / height) * 7000
+    const pixelFromBottom = rect.height - clickY;
+    const targetY = (pixelFromBottom / rect.height) * 7000;
+
+    console.log(`Navigating to: X=${Math.round(targetX)}, Y=${Math.round(targetY)}`);
+
+    const txData = {
+      type: 'navigate',
+      x: Math.round(targetX),
+      y: Math.round(targetY),
+    };
+
+    (async () => {
+      await sendJsonData([txData], bluetoothTxCharacteristic);
+    })();
+  };
 
   return (
     <div className="h-svh touch-none select-none">
@@ -244,17 +310,45 @@ export default function App() {
       </div>
 
       <div className="pointer-events-none absolute inset-0 m-auto h-fit w-fit bg-white">
-        <img src={FieldSvg} alt="Field" className="h-[80svh] w-auto" />
-        <img
-          src={KumaSvg}
-          alt="RoboKuma"
-          className="translate-1/2 absolute size-[6svh]"
-          style={{
-            bottom: `calc(${robotPosY} / 7000 * 80svh)`,
-            right: `calc(${robotPosX} / 3500 * 40svh)`,
-            transform: `rotate(${robotAngle}deg)`,
-          }}
-        />
+        <div className="relative">
+          <img
+            ref={mapRef}
+            src={FieldSvg}
+            alt="Field"
+            className="pointer-events-auto h-[80svh] w-auto cursor-crosshair"
+            onClick={handleMapClick}
+          />
+          
+          {/* Path visualization overlay */}
+          {pathData && mapDimensions.width > 0 && (
+            <div className="absolute inset-0">
+              <PathVisualizer
+                spots={pathData.spots}
+                path={pathData.path}
+                mapWidth={mapDimensions.width}
+                mapHeight={mapDimensions.height}
+              />
+            </div>
+          )}
+          
+          <img
+            src={KumaSvg}
+            alt="RoboKuma"
+            className="translate-1/2 absolute size-[6svh]"
+            style={{
+              bottom: `calc(${robotPosY} / 7000 * 80svh)`,
+              right: `calc(${robotPosX} / 3500 * 40svh)`,
+              transform: `rotate(${robotAngle}deg)`,
+            }}
+          />
+          
+          {/* ROS connection status indicator */}
+          {rosConnected && (
+            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+              ROS Connected
+            </div>
+          )}
+        </div>
       </div>
 
       <div
