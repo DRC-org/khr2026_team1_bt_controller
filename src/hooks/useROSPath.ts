@@ -15,8 +15,14 @@ interface PathData {
   timestamp: number;
 }
 
+interface RobotPose {
+  position: { x: number; y: number; z: number };
+  orientation: { x: number; y: number; z: number; w: number };
+}
+
 export function useROSPath(rosbridgeUrl: string) {
   const [pathData, setPathData] = useState<PathData | null>(null);
+  const [currentPose, setCurrentPose] = useState<RobotPose | null>(null);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
@@ -57,11 +63,31 @@ export function useROSPath(rosbridgeUrl: string) {
       }
     });
 
+    // Subscribe to robot pose topic
+    const poseTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/robot/pose',
+      messageType: 'geometry_msgs/PoseStamped',
+    });
+
+    poseTopic.subscribe((message: unknown) => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const msg = message as any;
+        if (msg.pose) {
+             setCurrentPose(msg.pose);
+        }
+      } catch (error) {
+        console.error('❌ Failed to parse pose data:', error);
+      }
+    });
+
     return () => {
       pathTopic.unsubscribe();
+      poseTopic.unsubscribe();
       ros.close();
     };
   }, [rosbridgeUrl]);
 
-  return { pathData, connected };
+  return { pathData, currentPose, connected };
 }

@@ -59,12 +59,27 @@ export default function App() {
   });
 
   // ROS path visualization
-  const { pathData, connected: rosConnected } = useROSPath(
+  const { pathData, currentPose, connected: rosConnected } = useROSPath(
     'ws://localhost:9090',
   );
   const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
 
   useDisableContextMenu();
+
+  // Update robot position from ROS simulation
+  useEffect(() => {
+    if (currentPose) {
+      // Map ROS coordinates (meters) to UI coordinates (mm)
+      // ROS X (0.3m) -> UI X (300)
+      setRobotPosX(currentPose.position.x * 1000);
+      setRobotPosY(currentPose.position.y * 1000);
+      
+      // Calculate angle from quaternion if needed, but for now fixed or 0
+      // const q = currentPose.orientation;
+      // const angle = Math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z));
+      // setRobotAngle(angle * (180 / Math.PI));
+    }
+  }, [currentPose]);
 
   // Update map dimensions when map ref changes
   useEffect(() => {

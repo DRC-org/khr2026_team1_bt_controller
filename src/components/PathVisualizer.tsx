@@ -42,9 +42,26 @@ export function PathVisualizer({
   if (path.length === 0) return null;
 
   // Calculate pixel positions for all spots in path
+  const coordCounts = new Map<string, number>();
+
   const pathPixels = path.map((spotId, index) => {
     const spot = spots[spotId];
-    const pos = fieldToPixel(spot.x, spot.y, mapWidth, mapHeight);
+    // Safety check just in case
+    if (!spot) return { x: 0, y: 0, id: spotId, name: 'Unknown', index };
+
+    let pos = fieldToPixel(spot.x, spot.y, mapWidth, mapHeight);
+    
+    // Create a unique key for this coordinate
+    const key = `${Math.round(pos.x)},${Math.round(pos.y)}`;
+    const count = coordCounts.get(key) || 0;
+    
+    // If revisited, offset the position slightly to avoid overlap
+    if (count > 0) {
+      pos = { ...pos, x: pos.x + count * 25 }; // Offset by 25px to the right
+    }
+    
+    coordCounts.set(key, count + 1);
+
     return { id: spotId, index, name: spot.name, ...pos };
   });
 
@@ -105,10 +122,11 @@ export function PathVisualizer({
           <circle
             cx={point.x}
             cy={point.y - 20}
-            r="12"
+            r="10"
             fill="#3b82f6"
             stroke="white"
             strokeWidth="2"
+            fillOpacity="0.8"
           />
           <text
             x={point.x}
