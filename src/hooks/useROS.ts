@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as ROSLIB from 'roslib';
 
 interface Spot {
@@ -20,15 +20,19 @@ interface RobotPose {
   orientation: { x: number; y: number; z: number; w: number };
 }
 
-export function useROSPath(rosbridgeUrl: string) {
+export function useROS(rosbridgeUrl: string) {
   const [pathData, setPathData] = useState<PathData | null>(null);
   const [currentPose, setCurrentPose] = useState<RobotPose | null>(null);
   const [connected, setConnected] = useState(false);
+  const rosRef = useRef<ROSLIB.Ros | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cmdVelTopicRef = useRef<any>(null);
 
   useEffect(() => {
     const ros = new ROSLIB.Ros({
       url: rosbridgeUrl,
     });
+    rosRef.current = ros;
 
     ros.on('connection', () => {
       console.log('✅ Connected to ROS bridge');
@@ -56,7 +60,7 @@ export function useROSPath(rosbridgeUrl: string) {
       try {
         const msg = message as { data: string };
         const data = JSON.parse(msg.data) as PathData;
-        console.log('🗺️ Received new path:', data.path.length, 'waypoints');
+        // console.log('🗺️ Received new path:', data.path.length, 'waypoints');
         setPathData(data);
       } catch (error) {
         console.error('❌ Failed to parse path data:', error);
@@ -85,12 +89,45 @@ export function useROSPath(rosbridgeUrl: string) {
       }
     });
 
+    // Initialize cmd_vel publisher
+    cmdVelTopicRef.current = new ROSLIB.Topic({
+      ros: ros,
+      name: '/cmd_vel',
+      messageType: 'geometry_msgs/Twist',
+    });
+
     return () => {
       pathTopic.unsubscribe();
       poseTopic.unsubscribe();
+      if (cmdVelTopicRef.current) {
+        cmdVelTopicRef.current.unadvertise();
+      }
       ros.close();
     };
   }, [rosbridgeUrl]);
 
-  return { pathData, currentPose, connected };
+  // Publish velocity command
+  const publishCmdVel = useCallback(
+    (linearX: number, linearY: number, angularZ: number) => {
+      if (!rosRef.current || !connected || !cmdVelTopicRef.current) return;
+
+      const twist = {
+        linear: {
+          x: linearX,
+          y: linearY,
+          z: 0.0,
+        },
+        angular: {
+          x: 0.0,
+          y: 0.0,
+          z: angularZ,
+        },
+      };
+
+      cmdVelTopicRef.current.publish(twist);
+    },
+    [connected],
+  );
+
+  return { pathData, currentPose, connected, publishCmdVel };
 }

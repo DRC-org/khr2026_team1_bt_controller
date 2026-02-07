@@ -2,71 +2,93 @@ import JoystickController from 'joystick-controller';
 import {
   ArrowDown,
   ArrowUp,
-  BluetoothConnected,
-  BluetoothOff,
   Dice1,
   Dice2,
   Dice3,
   Maximize2,
   Minimize2,
   Square,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
 import OpButton from '@/components/OpButton';
 import { PathVisualizer } from '@/components/PathVisualizer';
-// import JoystickFields from '@/components/JoystickFields';
 import { Button } from '@/components/ui/button';
-import { useBluetoothConnect } from '@/hooks/useBluetoothConnect';
 import { useDisableContextMenu } from '@/hooks/useDisableContextMenu';
 import { useJoystickFields } from '@/hooks/useJoystickFields';
-import { useROSPath } from '@/hooks/useROSPath';
-import { sendJsonData } from '@/logics/bluetooth';
+import { useROS } from '@/hooks/useROS';
+
+// Robot control constants
+const MAX_LINEAR_SPEED = 0.5; // m/s
+const MAX_ANGULAR_SPEED = 1.5; // rad/s
+const JOYSTICK_MAX_RANGE = 70; // Joystick output range
 
 export default function App() {
   const [robotPosX, setRobotPosX] = useState(388);
   const [robotPosY, setRobotPosY] = useState(388);
   const [robotAngle, setRobotAngle] = useState(0);
-  const [lastProcessedIdx, setLastProcessedIdx] = useState(-1);
 
-  const {
-    bluetoothDevice,
-    isDeviceConnected,
-    bluetoothTxCharacteristic,
-    receivedMessages,
-    searchDevice,
-    disconnect,
-  } = useBluetoothConnect();
-
-  const {
-    // joystickLFields,
-    setJoystickLFields,
-    // joystickRFields,
-    setJoystickRFields,
-  } = useJoystickFields((joystickLFields, joystickRFields) => {
-    if (bluetoothTxCharacteristic === undefined) return;
-
-    const txData = {
-      type: 'joystick',
-      l_x: joystickLFields.x,
-      l_y: joystickLFields.y,
-      r: joystickRFields.x,
-    };
-    (async () => {
-      await sendJsonData([txData], bluetoothTxCharacteristic);
-    })();
-  });
-
-  // ROS path visualization
+  // ROS connection
   const {
     pathData,
     currentPose,
     connected: rosConnected,
-  } = useROSPath('ws://localhost:9090');
+    publishCmdVel,
+  } = useROS('ws://localhost:9090');
+
   const [mapDimensions, setMapDimensions] = useState({ width: 0, height: 0 });
 
   useDisableContextMenu();
+
+  // Joystick state
+  const joystickState = useRef({
+    linearX: 0,
+    linearY: 0,
+    angularZ: 0,
+  });
+
+  const { setJoystickLFields, setJoystickRFields } = useJoystickFields(
+    (joystickLFields, joystickRFields) => {
+      // Normalize joystick inputs (-1.0 to 1.0)
+      // Note: Joystick Y is inverted (up is negative in screen coords usually, but let's check lib)
+      // Usually joystick libraries give Y negative for up.
+      // Robot coordinate: X is forward, Y is left.
+      // Joystick L: Move
+      //   Up/Down -> Robot X (Forward/Back)
+      //   Left/Right -> Robot Y (Left/Right)
+      // Joystick R: Turn
+      //   Left/Right -> Robot Angular Z
+
+      // joystick-controller returns 'leveledX' and 'leveledY'.
+      // assuming Up is negative Y in screen coords -> Forward is +X in robot
+      // Left is negative X in screen coords -> Left is +Y in robot
+
+      const normLX = joystickLFields.x / JOYSTICK_MAX_RANGE; // -1 to 1
+      const normLY = -joystickLFields.y / JOYSTICK_MAX_RANGE; // -1 to 1 (Invert Y for Forward being Up)
+      const normRX = joystickRFields.x / JOYSTICK_MAX_RANGE; // -1 to 1
+
+      // Map to robot velocities
+      const linearX = normLY * MAX_LINEAR_SPEED;
+      // For mecanum, Left/Right on stick maps to Y (Left/Right)
+      // Screen Left (-x) -> Robot Left (+y)
+      const linearY = -normLX * MAX_LINEAR_SPEED;
+
+      // Turn: Left (-x) should differ to +AngularZ (CCW) often
+      const angularZ = -normRX * MAX_ANGULAR_SPEED;
+
+      joystickState.current = { linearX, linearY, angularZ };
+
+      // Publish immediately or rely on interval?
+      // For smooth control, interval is better, but here we trigger on callback
+      publishCmdVel(linearX, linearY, angularZ);
+    },
+  );
+
+  // Interval-based publishing for safety (optional, but keep alive)
+  // Currently disabled to avoid flooding, relying on callback.
 
   // Update robot position from ROS simulation
   useEffect(() => {
@@ -76,12 +98,17 @@ export default function App() {
       setRobotPosX(currentPose.position.x * 1000);
       setRobotPosY(currentPose.position.y * 1000);
 
-      // Calculate angle from quaternion if needed, but for now fixed or 0
-      // const q = currentPose.orientation;
-      // const angle = Math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z));
-      // setRobotAngle(angle * (180 / Math.PI));
+      // Calculate angle from quaternion
+       const q = currentPose.orientation;
+       // Yaw (z-axis rotation) from quaternion
+       const siny_cosp = 2 * (q.w * q.z + q.x * q.y);
+       const cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+       const angle = Math.atan2(siny_cosp, cosy_cosp);
+       setRobotAngle(angle * (180 / Math.PI));
     }
   }, [currentPose]);
+
+  const mapRef = useRef<HTMLImageElement>(null);
 
   // Update map dimensions when map ref changes
   useEffect(() => {
@@ -112,16 +139,16 @@ export default function App() {
 
   useEffect(() => {
     if (!showJoystick) return;
-    
+
     // Ensure DOM is ready
     const leftZone = document.getElementById('joystick-l-field');
     const rightZone = document.getElementById('joystick-r-field');
-    
+
     if (!leftZone || !rightZone) return;
 
     const joystickL = new JoystickController(
       {
-        maxRange: 140,
+        maxRange: JOYSTICK_MAX_RANGE * 2, // *2 for physical range visual
         radius: 70,
         joystickRadius: 40,
         hideContextMenu: true,
@@ -140,7 +167,7 @@ export default function App() {
     );
     const joystickR = new JoystickController(
       {
-        maxRange: 140,
+        maxRange: JOYSTICK_MAX_RANGE * 2,
         radius: 70,
         joystickRadius: 40,
         hideContextMenu: true,
@@ -162,90 +189,33 @@ export default function App() {
     };
   }, [showJoystick]); // Re-run when toggled
 
-  // Update map dimensions when map ref changes
-  useEffect(() => {
+  const handleMapClick = (e: React.MouseEvent<HTMLImageElement>) => {
     if (!mapRef.current) return;
 
-    const updateDimensions = () => {
-      if (mapRef.current) {
-        setMapDimensions({
-          width: mapRef.current.clientWidth,
-          height: mapRef.current.clientHeight,
-        });
-      }
-    };
-
-    // Initial update
-    updateDimensions();
-
-    // Update on window resize
-    const resizeObserver = new ResizeObserver(updateDimensions);
-    resizeObserver.observe(mapRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-  const mapRef = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    if (!isDeviceConnected) {
-      setLastProcessedIdx(-1);
+    if (!confirm('この場所に移動しますか？ (Goal Publish not implemented yet)'))
       return;
-    }
-
-    for (let i = lastProcessedIdx + 1; i < receivedMessages.length; i++) {
-      const msg = receivedMessages[i];
-      try {
-        const data = JSON.parse(msg);
-        if (data.type === 'robot_pos') {
-          setRobotPosX(data.x);
-          setRobotPosY(data.y);
-          setRobotAngle(data.angle);
-        }
-      } catch (_e) {
-        console.error('Invalid JSON message:', msg);
-      }
-    }
-    if (receivedMessages.length > 0) {
-      setLastProcessedIdx(receivedMessages.length - 1);
-    }
-  }, [receivedMessages, lastProcessedIdx, isDeviceConnected]);
-
-  const handleMapClick = (e: React.MouseEvent<HTMLImageElement>) => {
-    if (!mapRef.current || !bluetoothTxCharacteristic) return;
-
-    if (!confirm('この場所に移動しますか？')) return;
 
     const rect = mapRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
     // Calculate coordinates based on display logic
-    // X (Short edge, 0-3500): displayed using 'right', so 0 is at right edge, 3500 at left edge.
-    // X = (distance from right / width) * 3500
+    // X (Short edge, 0-3500)
     const pixelFromRight = rect.width - clickX;
     const targetX = (pixelFromRight / rect.width) * 3500;
 
-    // Y (Long edge, 0-7000): displayed using 'bottom', so 0 is at bottom edge, 7000 at top edge.
-    // Y = (distance from bottom / height) * 7000
+    // Y (Long edge, 0-7000)
     const pixelFromBottom = rect.height - clickY;
     const targetY = (pixelFromBottom / rect.height) * 7000;
 
     console.log(
-      `Navigating to: X=${Math.round(targetX)}, Y=${Math.round(targetY)}`,
+      `Clicked: UI X=${Math.round(targetX)}, Y=${Math.round(targetY)}`,
     );
-
-    const txData = {
-      type: 'navigate',
-      x: Math.round(targetX),
-      y: Math.round(targetY),
-    };
-
-    (async () => {
-      await sendJsonData([txData], bluetoothTxCharacteristic);
-    })();
+    console.log(
+      `ROS Target: X=${(targetX / 1000).toFixed(2)}, Y=${(targetY / 1000).toFixed(2)}`,
+    );
+    
+    // TODO: Publish to /goal_pose or similar
   };
 
   return (
@@ -254,27 +224,20 @@ export default function App() {
         <Button
           variant="secondary"
           className="relative z-10 font-normal"
-          onClick={isDeviceConnected ? disconnect : searchDevice}
+          disabled
         >
-          {isDeviceConnected ? (
-            <BluetoothConnected className="text-green-600" />
+          {rosConnected ? (
+            <Wifi className="text-green-600" />
           ) : (
-            <BluetoothOff className="size-5 text-destructive" />
+            <WifiOff className="size-5 text-destructive" />
           )}
           <p className="-mr-1 font-medium">
-            {isDeviceConnected ? 'Connected' : 'Disconnected'}
-          </p>
-          <p>
-            (
-            {bluetoothDevice
-              ? bluetoothDevice.name || bluetoothDevice.id
-              : 'N/A'}
-            )
+            {rosConnected ? 'ROS Online' : 'ROS Offline'}
           </p>
         </Button>
-        
-        <Button 
-          variant="outline" 
+
+        <Button
+          variant="outline"
           className="relative z-10"
           onClick={() => setShowJoystick(!showJoystick)}
         >
@@ -344,7 +307,7 @@ export default function App() {
         <div className="flex flex-1 flex-col gap-3">
           <OpButton target="yagura">
             <ArrowUp className="size-6" />
-          </OpButton>
+            </OpButton>
           <OpButton target="yagura" className="h-18">
             <Square className="size-5" />
           </OpButton>
@@ -373,15 +336,15 @@ export default function App() {
 
           {/* Path visualization overlay */}
           {pathData && mapDimensions.width > 0 && (
-            <div className="absolute inset-0">
-              <PathVisualizer
-                spots={pathData.spots}
-                path={pathData.path}
-                mapWidth={mapDimensions.width}
-                mapHeight={mapDimensions.height}
-              />
-            </div>
-          )}
+             <div className="absolute inset-0">
+               <PathVisualizer
+                 spots={pathData.spots}
+                 path={pathData.path}
+                 mapWidth={mapDimensions.width}
+                 mapHeight={mapDimensions.height}
+               />
+             </div>
+           )}
 
           <img
             src={KumaSvg}
@@ -393,13 +356,6 @@ export default function App() {
               transform: `rotate(${robotAngle}deg)`,
             }}
           />
-
-          {/* ROS connection status indicator */}
-          {rosConnected && (
-            <div className="absolute top-2 right-2 rounded bg-green-500 px-2 py-1 text-white text-xs">
-              ROS Connected
-            </div>
-          )}
         </div>
       </div>
 
