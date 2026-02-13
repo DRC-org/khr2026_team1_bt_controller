@@ -20,9 +20,30 @@ interface RobotPose {
   orientation: { x: number; y: number; z: number; w: number };
 }
 
+export interface ScoreDetail {
+  total_score: number;
+  ote: boolean;
+  v_goal: boolean;
+  yagura_zone_entered: boolean;
+  rings_in_honmaru: number;
+}
+
+export interface RobotControlStatus {
+  yagura: {
+    '1_pos': string;
+    '1_state': string;
+  };
+  ring: {
+    '1_pos': string;
+    '1_state': string;
+  };
+}
+
 export function useROS(rosbridgeUrl: string) {
   const [pathData, setPathData] = useState<PathData | null>(null);
   const [currentPose, setCurrentPose] = useState<RobotPose | null>(null);
+  const [scoreDetail, setScoreDetail] = useState<ScoreDetail | null>(null);
+  const [controlStatus, setControlStatus] = useState<RobotControlStatus | null>(null);
   const [connected, setConnected] = useState(false);
   const rosRef = useRef<ROSLIB.Ros | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -89,6 +110,38 @@ export function useROS(rosbridgeUrl: string) {
       }
     });
 
+    // Subscribe to score detail
+    const scoreTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/score_detail',
+      messageType: 'std_msgs/String',
+    });
+
+    scoreTopic.subscribe((message: unknown) => {
+      try {
+        const msg = message as { data: string };
+        setScoreDetail(JSON.parse(msg.data) as ScoreDetail);
+      } catch (error) {
+        // console.error('❌ Failed to parse score detail:', error);
+      }
+    });
+
+    // Subscribe to robot control status
+    const statusTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/robot_control',
+      messageType: 'std_msgs/String',
+    });
+
+    statusTopic.subscribe((message: unknown) => {
+      try {
+        const msg = message as { data: string };
+        setControlStatus(JSON.parse(msg.data) as RobotControlStatus);
+      } catch (error) {
+        // console.error('❌ Failed to parse status:', error);
+      }
+    });
+
     // Initialize cmd_vel publisher
     cmdVelTopicRef.current = new ROSLIB.Topic({
       ros: ros,
@@ -99,6 +152,8 @@ export function useROS(rosbridgeUrl: string) {
     return () => {
       pathTopic.unsubscribe();
       poseTopic.unsubscribe();
+      scoreTopic.unsubscribe();
+      statusTopic.unsubscribe();
       if (cmdVelTopicRef.current) {
         cmdVelTopicRef.current.unadvertise();
       }
@@ -129,5 +184,5 @@ export function useROS(rosbridgeUrl: string) {
     [connected],
   );
 
-  return { pathData, currentPose, connected, publishCmdVel };
+  return { pathData, currentPose, scoreDetail, controlStatus, connected, publishCmdVel };
 }

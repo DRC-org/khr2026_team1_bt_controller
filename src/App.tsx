@@ -35,6 +35,8 @@ export default function App() {
   const {
     pathData,
     currentPose,
+    scoreDetail,
+    controlStatus,
     connected: rosConnected,
     publishCmdVel,
   } = useROS('ws://localhost:9090');
@@ -236,9 +238,27 @@ export default function App() {
           </p>
         </Button>
 
+        {scoreDetail && (
+          <div className="flex gap-2 ml-4 relative z-10">
+            <div className="bg-primary text-primary-foreground px-3 py-1 rounded-md font-bold">
+              Score: {scoreDetail.total_score}
+            </div>
+            {scoreDetail.ote && (
+              <div className="bg-orange-500 text-white px-3 py-1 rounded-md font-bold animate-pulse">
+                王手!
+              </div>
+            )}
+            {scoreDetail.v_goal && (
+              <div className="bg-yellow-400 text-black px-3 py-1 rounded-md font-bold">
+                攻略達成!
+              </div>
+            )}
+          </div>
+        )}
+
         <Button
           variant="outline"
-          className="relative z-10"
+          className="relative z-10 ml-auto"
           onClick={() => setShowJoystick(!showJoystick)}
         >
           {showJoystick ? 'Hide Stick' : 'Show Stick'}
