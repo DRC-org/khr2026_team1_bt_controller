@@ -1,9 +1,20 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   fetchRxCharacteristic,
   fetchTxCharacteristic,
   searchDevice as searchBtDevice,
 } from '@/logics/bluetooth';
+
+type MessageCallback = (message: string) => void;
+
+// === BLE DEBUG ===
+const bleDebug = {
+  eventCount: 0,
+  lastEventTime: 0,
+  maxEventInterval: 0,
+  totalBytes: 0,
+  lastLogTime: performance.now(),
+};
 
 export function useBluetoothConnect() {
   const [bluetoothDevice, setBluetoothDevice] = useState<BluetoothDevice>();
@@ -12,7 +23,12 @@ export function useBluetoothConnect() {
     useState<BluetoothRemoteGATTCharacteristic>();
   const [bluetoothRxCharacteristic, setBluetoothRxCharacteristic] =
     useState<BluetoothRemoteGATTCharacteristic>();
-  const [receivedMessages, setReceivedMessages] = useState<string[]>([]);
+
+  const messageCallbackRef = useRef<MessageCallback | null>(null);
+
+  const onMessage = useCallback((callback: MessageCallback) => {
+    messageCallbackRef.current = callback;
+  }, []);
 
   function disconnect() {
     if (!confirm('Are you sure you want to disconnect?')) return;
@@ -38,7 +54,6 @@ export function useBluetoothConnect() {
       setIsDeviceConnected(false);
       setBluetoothTxCharacteristic(undefined);
       setBluetoothRxCharacteristic(undefined);
-      setReceivedMessages([]);
     });
     setBluetoothDevice(device);
 
@@ -55,16 +70,36 @@ export function useBluetoothConnect() {
       rxCharacteristic.addEventListener(
         'characteristicvaluechanged',
         (event) => {
-          const decoder = new TextDecoder('utf-8');
-          const message = decoder.decode(
-            (event.target as BluetoothRemoteGATTCharacteristic).value,
-          );
-          setReceivedMessages((prev) => [...prev, message]);
+          const now = performance.now();
+          const value = (event.target as BluetoothRemoteGATTCharacteristic)
+            .value;
+          const byteLen = value?.byteLength ?? 0;
 
-          // Keep only the latest 100 messages
-          if (receivedMessages.length > 100) {
-            setReceivedMessages((prev) => prev.slice(-100));
+          // === BLE DEBUG ===
+          if (bleDebug.lastEventTime > 0) {
+            const interval = now - bleDebug.lastEventTime;
+            if (interval > bleDebug.maxEventInterval)
+              bleDebug.maxEventInterval = interval;
           }
+          bleDebug.lastEventTime = now;
+          bleDebug.eventCount++;
+          bleDebug.totalBytes += byteLen;
+
+          if (now - bleDebug.lastLogTime > 3000) {
+            console.log(
+              `[BLE DEBUG] ${bleDebug.eventCount} events in 3s (${(bleDebug.eventCount / 3).toFixed(1)}/s) | ` +
+                `maxInterval: ${bleDebug.maxEventInterval.toFixed(0)}ms | ` +
+                `avgSize: ${bleDebug.eventCount > 0 ? (bleDebug.totalBytes / bleDebug.eventCount).toFixed(0) : 0}B`,
+            );
+            bleDebug.eventCount = 0;
+            bleDebug.maxEventInterval = 0;
+            bleDebug.totalBytes = 0;
+            bleDebug.lastLogTime = now;
+          }
+
+          const decoder = new TextDecoder('utf-8');
+          const message = decoder.decode(value);
+          messageCallbackRef.current?.(message);
         },
       );
       await rxCharacteristic.startNotifications();
@@ -76,7 +111,7 @@ export function useBluetoothConnect() {
     isDeviceConnected,
     bluetoothTxCharacteristic,
     bluetoothRxCharacteristic,
-    receivedMessages,
+    onMessage,
     searchDevice,
     disconnect,
   };

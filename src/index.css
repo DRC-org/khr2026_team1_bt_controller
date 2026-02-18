@@ -3,16 +3,7 @@
 
 /* Inter font */
 :root {
-  font-family: Inter, sans-serif;
-  font-feature-settings:
-    "liga" 1,
-    "calt" 1; /* fix for Chrome */
-}
-
-@supports (font-variation-settings: normal) {
-  :root {
-    font-family: InterVariable, sans-serif;
-  }
+  font-family: "LINE Seed JP", sans-serif;
 }
 
 /* Make the cursor a pointer on buttons */
