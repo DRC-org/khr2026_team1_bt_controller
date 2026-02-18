@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PID_GAIN_CONFIGS, type PIDGains } from './types';
 
@@ -19,11 +19,11 @@ export function PIDGainControls({
     kd: 0.0,
   });
 
-  useEffect(() => {
-    if (currentGains) {
-      setLocalGains(currentGains);
-    }
-  }, [currentGains]);
+  // useEffect(() => {
+  //   if (currentGains) {
+  //     setLocalGains(currentGains);
+  //   }
+  // }, [currentGains]);
 
   const handleGainChange = useCallback(
     (key: keyof PIDGains, value: number) => {

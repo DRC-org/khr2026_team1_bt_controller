@@ -7,6 +7,15 @@ import {
 
 type MessageCallback = (message: string) => void;
 
+// === BLE DEBUG ===
+const bleDebug = {
+  eventCount: 0,
+  lastEventTime: 0,
+  maxEventInterval: 0,
+  totalBytes: 0,
+  lastLogTime: performance.now(),
+};
+
 export function useBluetoothConnect() {
   const [bluetoothDevice, setBluetoothDevice] = useState<BluetoothDevice>();
   const [isDeviceConnected, setIsDeviceConnected] = useState(false);
@@ -61,10 +70,35 @@ export function useBluetoothConnect() {
       rxCharacteristic.addEventListener(
         'characteristicvaluechanged',
         (event) => {
+          const now = performance.now();
+          const value = (event.target as BluetoothRemoteGATTCharacteristic)
+            .value;
+          const byteLen = value?.byteLength ?? 0;
+
+          // === BLE DEBUG ===
+          if (bleDebug.lastEventTime > 0) {
+            const interval = now - bleDebug.lastEventTime;
+            if (interval > bleDebug.maxEventInterval)
+              bleDebug.maxEventInterval = interval;
+          }
+          bleDebug.lastEventTime = now;
+          bleDebug.eventCount++;
+          bleDebug.totalBytes += byteLen;
+
+          if (now - bleDebug.lastLogTime > 3000) {
+            console.log(
+              `[BLE DEBUG] ${bleDebug.eventCount} events in 3s (${(bleDebug.eventCount / 3).toFixed(1)}/s) | ` +
+                `maxInterval: ${bleDebug.maxEventInterval.toFixed(0)}ms | ` +
+                `avgSize: ${bleDebug.eventCount > 0 ? (bleDebug.totalBytes / bleDebug.eventCount).toFixed(0) : 0}B`,
+            );
+            bleDebug.eventCount = 0;
+            bleDebug.maxEventInterval = 0;
+            bleDebug.totalBytes = 0;
+            bleDebug.lastLogTime = now;
+          }
+
           const decoder = new TextDecoder('utf-8');
-          const message = decoder.decode(
-            (event.target as BluetoothRemoteGATTCharacteristic).value,
-          );
+          const message = decoder.decode(value);
           messageCallbackRef.current?.(message);
         },
       );

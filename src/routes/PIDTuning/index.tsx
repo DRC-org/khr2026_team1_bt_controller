@@ -31,12 +31,8 @@ export default function PIDTuning() {
     disconnect,
   } = useBluetoothConnect();
 
-  const { chartRefs, chartData, chartOptions, clearAllCharts } = usePIDCharts(
-    onMessage,
-    isDeviceConnected,
-    selectedMotor,
-    setCurrentGains,
-  );
+  const { chartRefs, chartData, chartOptions, clearAllCharts, debugStats } =
+    usePIDCharts(onMessage, isDeviceConnected, selectedMotor, setCurrentGains);
 
   const handleMotorChange = (motor: MotorKey) => {
     clearAllCharts();
@@ -104,6 +100,41 @@ export default function PIDTuning() {
         currentGains={currentGains}
         disabled={!isDeviceConnected}
       />
+
+      {/* Debug Stats */}
+      {debugStats && (
+        <div className="grid grid-cols-6 gap-2 rounded bg-gray-100 p-2 font-mono text-xs">
+          <div>
+            Rate: <b>{debugStats.msgRate}</b>/s
+          </div>
+          <div>
+            Proc avg: <b>{debugStats.avgProcessTime}</b>ms
+          </div>
+          <div>
+            Proc max: <b>{debugStats.maxProcessTime}</b>ms
+          </div>
+          <div>
+            MaxGap:{' '}
+            <b
+              className={
+                Number(debugStats.maxInterval) > 200 ? 'text-red-600' : ''
+              }
+            >
+              {debugStats.maxInterval}
+            </b>
+            ms
+          </div>
+          <div>
+            Points: <b>{debugStats.datasetSize}</b>
+          </div>
+          <div>
+            Errors:{' '}
+            <b className={debugStats.parseErrors > 0 ? 'text-red-600' : ''}>
+              {debugStats.parseErrors}
+            </b>
+          </div>
+        </div>
+      )}
 
       {/* ① PID Terms chart (large) */}
       <div>

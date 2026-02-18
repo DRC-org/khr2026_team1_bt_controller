@@ -29,6 +29,7 @@ export const SINGLE_LINE_COLOR = 'rgb(59, 130, 246)';
 
 export const CHART_CONFIG = {
   duration: 10000,
-  refresh: 100,
+  frameRate: 5, // メインチャート: 5fps
+  smallFrameRate: 1, // 小チャート: 1fps（レンダリング負荷軽減）
   tension: 0.3,
 } as const;

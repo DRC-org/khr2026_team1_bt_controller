@@ -11,12 +11,16 @@ export function createLargeChartOptions(yLabel: string): ChartOptions<'line'> {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    normalized: true,
+    spanGaps: true,
     scales: {
       x: {
         type: 'realtime' as const,
         realtime: {
           duration: CHART_CONFIG.duration,
-          refresh: CHART_CONFIG.refresh,
+          refresh: 0, // onRefresh 不使用（手動 push）
+          frameRate: CHART_CONFIG.frameRate,
+          ttl: CHART_CONFIG.duration + 5000, // 自動で古いデータを削除
         },
         title: { display: true, text: 'Time' },
       },
@@ -35,12 +39,16 @@ export function createSmallChartOptions(yLabel: string): ChartOptions<'line'> {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    normalized: true,
+    spanGaps: true,
     scales: {
       x: {
         type: 'realtime' as const,
         realtime: {
           duration: CHART_CONFIG.duration,
-          refresh: CHART_CONFIG.refresh,
+          refresh: 0,
+          frameRate: CHART_CONFIG.smallFrameRate,
+          ttl: CHART_CONFIG.duration + 5000,
         },
         title: { display: false },
         ticks: { display: false },
@@ -65,6 +73,8 @@ export function createPIDTermsChartData() {
         backgroundColor: PID_COLORS.p,
         data: [] as ChartDataPoint[],
         tension: CHART_CONFIG.tension,
+        pointRadius: 0,
+        borderWidth: 1.5,
       },
       {
         label: 'I Term',
@@ -72,6 +82,8 @@ export function createPIDTermsChartData() {
         backgroundColor: PID_COLORS.i,
         data: [] as ChartDataPoint[],
         tension: CHART_CONFIG.tension,
+        pointRadius: 0,
+        borderWidth: 1.5,
       },
       {
         label: 'D Term',
@@ -79,6 +91,8 @@ export function createPIDTermsChartData() {
         backgroundColor: PID_COLORS.d,
         data: [] as ChartDataPoint[],
         tension: CHART_CONFIG.tension,
+        pointRadius: 0,
+        borderWidth: 1.5,
       },
     ],
   };
@@ -93,6 +107,8 @@ export function createRpmCompareChartData() {
         backgroundColor: RPM_COLORS.target,
         data: [] as ChartDataPoint[],
         tension: CHART_CONFIG.tension,
+        pointRadius: 0,
+        borderWidth: 1.5,
       },
       {
         label: 'Current RPM',
@@ -100,6 +116,8 @@ export function createRpmCompareChartData() {
         backgroundColor: RPM_COLORS.current,
         data: [] as ChartDataPoint[],
         tension: CHART_CONFIG.tension,
+        pointRadius: 0,
+        borderWidth: 1.5,
       },
     ],
   };
@@ -114,6 +132,8 @@ export function createSingleLineChartData(label: string) {
         backgroundColor: SINGLE_LINE_COLOR,
         data: [] as ChartDataPoint[],
         tension: CHART_CONFIG.tension,
+        pointRadius: 0,
+        borderWidth: 1.5,
       },
     ],
   };
