@@ -51,7 +51,7 @@ export default function Controller() {
       r: joystickRFields.x,
     };
     (async () => {
-      await sendJsonData([txData], bluetoothTxCharacteristic);
+      await sendJsonData(txData, bluetoothTxCharacteristic);
     })();
   });
 
