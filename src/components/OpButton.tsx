@@ -1,7 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import type { ComponentProps } from 'react';
 import { Button } from '@/components/ui/button';
-import { useBluetoothConnect } from '@/hooks/useBluetoothConnect';
 import { cn } from '@/lib/utils';
 import { sendJsonData } from '@/logics/bluetooth';
 
@@ -19,6 +18,7 @@ export default function OpButton({
   hid,
   control_type,
   action,
+  characteristic,
   className,
   ...props
 }: ComponentProps<typeof Button> &
@@ -27,15 +27,14 @@ export default function OpButton({
     hid: number;
     control_type: 'pos' | 'state';
     action: string;
+    characteristic: BluetoothRemoteGATTCharacteristic | undefined;
   }) {
-  const { bluetoothTxCharacteristic } = useBluetoothConnect();
-
   async function sendHandCommand(
     target: string,
     control_type: string,
     action: string,
   ) {
-    if (bluetoothTxCharacteristic === undefined) return;
+    if (!characteristic) return;
 
     const command = {
       type: 'hand_control',
@@ -44,7 +43,8 @@ export default function OpButton({
       action,
     };
 
-    await sendJsonData(command, bluetoothTxCharacteristic);
+    await sendJsonData(command, characteristic);
+    console.log('sent');
   }
 
   return (
