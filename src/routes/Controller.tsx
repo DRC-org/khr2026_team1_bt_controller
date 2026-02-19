@@ -167,32 +167,32 @@ export default function Controller() {
 
       <div className="pointer-events-none absolute top-1/3 left-5 z-10 flex w-[calc(50%-20svh-2.5rem)] -translate-y-1/2 items-center gap-3">
         <div className="flex flex-1 flex-col gap-3">
-          <OpButton target="yagura">
+          <OpButton target="yagura" hid={1} control_type="pos" action="up">
             <ArrowUp className="size-6" />
           </OpButton>
-          <OpButton target="yagura" className="h-18">
+          <OpButton target="yagura" hid={1} control_type="pos" action="stopped">
             <Square className="size-5" />
           </OpButton>
-          <OpButton target="yagura">
+          <OpButton target="yagura" hid={1} control_type="pos" action="down">
             <ArrowDown className="size-6" />
           </OpButton>
         </div>
         <div className="flex flex-1 flex-col gap-3">
-          <OpButton target="yagura">
+          <OpButton target="yagura" hid={1} control_type="state" action="open">
             <Maximize2 className="size-6" />
             Open
           </OpButton>
-          <OpButton target="yagura">
+          <OpButton target="yagura" hid={1} control_type="state" action="close">
             <Minimize2 className="size-6" />
             Close
           </OpButton>
         </div>
         <div className="flex flex-1 flex-col gap-3">
-          <OpButton target="ring">
+          <OpButton target="ring" hid={1} control_type="state" action="open">
             <Maximize2 className="size-6" />
             Open
           </OpButton>
-          <OpButton target="ring">
+          <OpButton target="ring" hid={1} control_type="state" action="close">
             <Minimize2 className="size-6" />
             Close
           </OpButton>
@@ -201,37 +201,37 @@ export default function Controller() {
 
       <div className="pointer-events-none absolute top-1/3 right-5 z-10 flex w-[calc(50%-20svh-2.5rem)] -translate-y-1/2 items-center gap-3">
         <div className="flex flex-1 flex-col gap-3">
-          <OpButton target="ring">
+          <OpButton target="ring" hid={1} control_type="pos" action="pickup">
             <Dice1 className="size-6" />
             Grab
           </OpButton>
-          <OpButton target="ring">
+          <OpButton target="ring" hid={1} control_type="pos" action="yagura">
             <Dice2 className="size-6" />
             Rel. 25
           </OpButton>
-          <OpButton target="ring">
+          <OpButton target="ring" hid={1} control_type="pos" action="honmaru">
             <Dice3 className="size-6" />
             Rel. 50
           </OpButton>
         </div>
         <div className="flex flex-1 flex-col gap-3">
-          <OpButton target="yagura">
+          <OpButton target="yagura" hid={2} control_type="state" action="open">
             <Maximize2 className="size-6" />
             Open
           </OpButton>
-          <OpButton target="yagura">
+          <OpButton target="yagura" hid={2} control_type="state" action="close">
             <Minimize2 className="size-6" />
             Close
           </OpButton>
         </div>
         <div className="flex flex-1 flex-col gap-3">
-          <OpButton target="yagura">
+          <OpButton target="yagura" hid={2} control_type="pos" action="up">
             <ArrowUp className="size-6" />
           </OpButton>
-          <OpButton target="yagura" className="h-18">
+          <OpButton target="yagura" hid={2} control_type="pos" action="stopped">
             <Square className="size-5" />
           </OpButton>
-          <OpButton target="yagura">
+          <OpButton target="yagura" hid={2} control_type="pos" action="down">
             <ArrowDown className="size-6" />
           </OpButton>
         </div>
