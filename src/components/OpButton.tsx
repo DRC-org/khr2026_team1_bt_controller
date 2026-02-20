@@ -38,7 +38,7 @@ export default function OpButton({
 
     const command = {
       type: 'hand_control',
-      target,
+      target: `${target}_${hid}`,
       control_type,
       action,
     };
