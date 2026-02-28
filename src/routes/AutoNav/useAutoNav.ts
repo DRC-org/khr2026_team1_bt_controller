@@ -41,14 +41,9 @@ export function useAutoNav(
       const waypoint = (data.waypoint as string | undefined) ?? null;
 
       if (status === 'mode') {
+        // rspi からの確認応答。楽観的更新済みのためログのみ追加
         const mode = data.mode as string;
-        if (mode === 'auto') {
-          setNavStatus('AUTO_IDLE');
-          addLog('mode → auto');
-        } else {
-          setNavStatus('MANUAL');
-          addLog('mode → manual');
-        }
+        addLog(`[rspi確認] mode → ${mode}`);
       } else if (status === 'navigating') {
         setNavStatus('NAVIGATING');
         setCurrentWaypoint(waypoint);
@@ -78,9 +73,13 @@ export function useAutoNav(
   const sendNavMode = useCallback(
     async (mode: 'manual' | 'auto') => {
       if (!bluetoothTxCharacteristic) return;
+      // rspi の応答（nav_status: mode）は race condition で届かない場合があるため楽観的更新
+      setNavStatus(mode === 'auto' ? 'AUTO_IDLE' : 'MANUAL');
+      if (mode === 'manual') setCurrentWaypoint(null);
+      addLog(`mode → ${mode}`);
       await sendJsonData({ type: 'nav_mode', mode }, bluetoothTxCharacteristic);
     },
-    [bluetoothTxCharacteristic],
+    [bluetoothTxCharacteristic, addLog],
   );
 
   const sendNavGoal = useCallback(
