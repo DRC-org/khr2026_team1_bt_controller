@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Route, Routes } from 'react-router';
+import AutoNav from '@/routes/AutoNav';
 import Controller from '@/routes/Controller';
 import Index from '@/routes/Index';
 import PIDTuning from '@/routes/PIDTuning';
@@ -16,6 +17,7 @@ if (rootElement) {
           <Route path="/" element={<Index />} />
           <Route path="/controller" element={<Controller />} />
           <Route path="/pid-tuning" element={<PIDTuning />} />
+          <Route path="/auto-nav" element={<AutoNav />} />
         </Routes>
       </HashRouter>
     </StrictMode>,

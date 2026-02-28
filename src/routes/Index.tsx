@@ -1,4 +1,4 @@
-import { Gamepad2, SlidersVertical } from 'lucide-react';
+import { Gamepad2, Navigation2, SlidersVertical } from 'lucide-react';
 import {
   Item,
   ItemContent,
@@ -23,6 +23,18 @@ export default function Index() {
             <ItemDescription>
               ロボットを半自動でコントロールする
             </ItemDescription>
+          </ItemContent>
+        </a>
+      </Item>
+
+      <Item variant="outline" asChild>
+        <a href="#/auto-nav">
+          <ItemMedia variant="icon">
+            <Navigation2 />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle className="font-bold">Auto Nav</ItemTitle>
+            <ItemDescription>自律走行のモード切替・ウェイポイント指定</ItemDescription>
           </ItemContent>
         </a>
       </Item>
