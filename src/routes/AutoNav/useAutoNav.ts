@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { sendJsonData } from '@/logics/bluetooth';
 
 type NavStatus = 'MANUAL' | 'AUTO_IDLE' | 'NAVIGATING' | 'ARRIVED' | 'ERROR' | 'CANCELLED';
+type Court = 'blue' | 'red';
 
 interface LogEntry {
   time: string;
@@ -14,12 +14,17 @@ function formatTime(date: Date): string {
 
 export function useAutoNav(
   onMessage: (callback: (message: string) => void) => void,
-  isDeviceConnected: boolean,
-  bluetoothTxCharacteristic: BluetoothRemoteGATTCharacteristic | undefined,
+  isConnected: boolean,
+  sendJson: (data: unknown) => void,
 ) {
   const [navStatus, setNavStatus] = useState<NavStatus>('MANUAL');
   const [currentWaypoint, setCurrentWaypoint] = useState<string | null>(null);
+  const [court, setCourt] = useState<Court>('blue');
+  const [progress, setProgress] = useState<string | null>(null);
   const [log, setLog] = useState<LogEntry[]>([]);
+  const [robotPosX, setRobotPosX] = useState(0);
+  const [robotPosY, setRobotPosY] = useState(0);
+  const [robotAngle, setRobotAngle] = useState(0);
 
   const addLog = useCallback((text: string) => {
     const entry: LogEntry = { time: formatTime(new Date()), text };
@@ -32,6 +37,13 @@ export function useAutoNav(
       try {
         data = JSON.parse(msg);
       } catch {
+        return;
+      }
+
+      if (data.type === 'robot_pos') {
+        setRobotPosX(data.x as number);
+        setRobotPosY(data.y as number);
+        setRobotAngle(data.angle as number);
         return;
       }
 
@@ -55,40 +67,91 @@ export function useAutoNav(
       } else if (status === 'cancelled') {
         setNavStatus('AUTO_IDLE');
         setCurrentWaypoint(null);
+        setProgress(null);
         addLog('cancelled');
       } else if (status === 'error') {
         setNavStatus('ERROR');
-        addLog('error');
+        const message = (data.message as string | undefined) ?? '';
+        addLog(`error: ${message}`);
+      } else if (status === 'court_set') {
+        const c = data.court as Court;
+        setCourt(c);
+        addLog(`court → ${c}`);
+      } else if (status === 'completed') {
+        setNavStatus('AUTO_IDLE');
+        setProgress(null);
+        addLog('auto sequence completed');
+      } else if (status === 'progress') {
+        const p = data.progress as string | undefined;
+        if (p) setProgress(p);
       }
     },
     [addLog],
   );
 
   useEffect(() => {
-    if (isDeviceConnected) {
+    if (isConnected) {
       onMessage(handleMessage);
     }
-  }, [isDeviceConnected, onMessage, handleMessage]);
+  }, [isConnected, onMessage, handleMessage]);
 
   const sendNavMode = useCallback(
-    async (mode: 'manual' | 'auto') => {
-      if (!bluetoothTxCharacteristic) return;
+    (mode: 'manual' | 'auto') => {
       // rspi の応答（nav_status: mode）は race condition で届かない場合があるため楽観的更新
       setNavStatus(mode === 'auto' ? 'AUTO_IDLE' : 'MANUAL');
-      if (mode === 'manual') setCurrentWaypoint(null);
+      if (mode === 'manual') {
+        setCurrentWaypoint(null);
+        setProgress(null);
+      }
       addLog(`mode → ${mode}`);
-      await sendJsonData({ type: 'nav_mode', mode }, bluetoothTxCharacteristic);
+      sendJson({ type: 'nav_mode', mode });
     },
-    [bluetoothTxCharacteristic, addLog],
+    [sendJson, addLog],
   );
 
   const sendNavGoal = useCallback(
-    async (waypoint: string) => {
-      if (!bluetoothTxCharacteristic) return;
-      await sendJsonData({ type: 'nav_goal', waypoint }, bluetoothTxCharacteristic);
+    (waypoint: string) => {
+      sendJson({ type: 'nav_goal', waypoint });
     },
-    [bluetoothTxCharacteristic],
+    [sendJson],
   );
 
-  return { navStatus, currentWaypoint, log, sendNavMode, sendNavGoal };
+  const sendSetCourt = useCallback(
+    (c: Court) => {
+      // 楽観的更新
+      setCourt(c);
+      addLog(`court → ${c}`);
+      sendJson({ type: 'set_court', court: c });
+    },
+    [sendJson, addLog],
+  );
+
+  const sendStartAuto = useCallback(() => {
+    setProgress(null);
+    addLog('start_auto');
+    sendJson({ type: 'start_auto' });
+  }, [sendJson, addLog]);
+
+  const sendStopAuto = useCallback(() => {
+    setNavStatus('AUTO_IDLE');
+    setProgress(null);
+    addLog('stop_auto');
+    sendJson({ type: 'stop_auto' });
+  }, [sendJson, addLog]);
+
+  return {
+    navStatus,
+    currentWaypoint,
+    court,
+    progress,
+    log,
+    robotPosX,
+    robotPosY,
+    robotAngle,
+    sendNavMode,
+    sendNavGoal,
+    sendSetCourt,
+    sendStartAuto,
+    sendStopAuto,
+  };
 }
