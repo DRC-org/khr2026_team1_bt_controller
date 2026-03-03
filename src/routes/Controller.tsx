@@ -11,7 +11,7 @@ import {
   Minimize2,
   Square,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
 import OpButton from '@/components/OpButton';
@@ -26,6 +26,7 @@ export default function Controller() {
   const [robotPosX, setRobotPosX] = useState(388);
   const [robotPosY, setRobotPosY] = useState(388);
   const [robotAngle, setRobotAngle] = useState(0);
+  const [court, setCourt] = useState<'blue' | 'red'>('blue');
 
   const {
     bluetoothDevice,
@@ -36,6 +37,18 @@ export default function Controller() {
     disconnect,
   } = useBluetoothConnect();
 
+  const btCharRef = useRef(bluetoothTxCharacteristic);
+  useEffect(() => {
+    btCharRef.current = bluetoothTxCharacteristic;
+  }, [bluetoothTxCharacteristic]);
+
+  const handleCourtSelect = useCallback((c: 'blue' | 'red') => {
+    setCourt(c);
+    if (btCharRef.current) {
+      sendJsonData({ type: 'set_court', court: c }, btCharRef.current);
+    }
+  }, []);
+
   const {
     // joystickLFields,
     setJoystickLFields,
@@ -44,10 +57,12 @@ export default function Controller() {
   } = useJoystickFields((joystickLFields, joystickRFields) => {
     if (bluetoothTxCharacteristic === undefined) return;
 
+    // 青コートはロボットが南向きのため、北を前にするために l_x・l_y を反転
+    const sign = court === 'blue' ? -1 : 1;
     const txData = {
       type: 'joystick',
-      l_x: joystickLFields.x,
-      l_y: joystickLFields.y,
+      l_x: sign * joystickLFields.x,
+      l_y: sign * joystickLFields.y,
       r: joystickRFields.x,
     };
     (async () => {
@@ -141,10 +156,10 @@ export default function Controller() {
         angle={joystickRFields.angle.toString()}
       /> */}
 
-      <div className="p-3">
+      <div className="relative z-10 flex items-center gap-2 p-3">
         <Button
           variant="secondary"
-          className="relative z-10 font-normal"
+          className="font-normal"
           onClick={isDeviceConnected ? disconnect : searchDevice}
         >
           {isDeviceConnected ? (
@@ -162,6 +177,22 @@ export default function Controller() {
               : 'N/A'}
             )
           </p>
+        </Button>
+        <Button
+          size="sm"
+          variant={court === 'blue' ? 'default' : 'outline'}
+          className={court === 'blue' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+          onClick={() => handleCourtSelect('blue')}
+        >
+          青
+        </Button>
+        <Button
+          size="sm"
+          variant={court === 'red' ? 'default' : 'outline'}
+          className={court === 'red' ? 'bg-red-600 hover:bg-red-700' : ''}
+          onClick={() => handleCourtSelect('red')}
+        >
+          赤
         </Button>
       </div>
 
