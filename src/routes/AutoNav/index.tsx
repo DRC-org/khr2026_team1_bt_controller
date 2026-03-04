@@ -1,5 +1,5 @@
-import { BluetoothConnected, BluetoothOff, ChevronLeft, Play, Square, Wifi, WifiOff } from 'lucide-react';
-import { useState } from 'react';
+import { BluetoothConnected, BluetoothOff, ChevronLeft, Maximize, Minimize, Play, Square, Wifi, WifiOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,18 @@ type ConnectionMode = 'ble' | 'ws';
 
 export default function AutoNav() {
   const [connectionMode, setConnectionMode] = useState<ConnectionMode>('ble');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
+  function toggleFullscreen() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
   const [wsUrl, setWsUrl] = useState(
     // HTTPS 環境では Vite proxy 経由の wss:// を使用（Mixed Content 回避）
     `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`,
@@ -125,6 +137,10 @@ export default function AutoNav() {
               WebSocket
             </button>
           </div>
+
+          <Button variant="ghost" size="icon-sm" onClick={toggleFullscreen} className="ml-auto">
+            {isFullscreen ? <Minimize /> : <Maximize />}
+          </Button>
         </div>
 
         {/* Connection panel */}
