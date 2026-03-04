@@ -1,4 +1,14 @@
-import { BluetoothConnected, BluetoothOff, ChevronLeft, Maximize, Minimize, Play, Square, Wifi, WifiOff } from 'lucide-react';
+import {
+  BluetoothConnected,
+  BluetoothOff,
+  ChevronLeft,
+  Maximize,
+  Minimize,
+  Play,
+  Square,
+  Wifi,
+  WifiOff,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
@@ -57,7 +67,8 @@ export default function AutoNav() {
   };
 
   const sendJson = connectionMode === 'ws' ? ws.sendJson : btSendJson;
-  const isConnected = connectionMode === 'ws' ? ws.isConnected : bt.isDeviceConnected;
+  const isConnected =
+    connectionMode === 'ws' ? ws.isConnected : bt.isDeviceConnected;
   const onMessage = connectionMode === 'ws' ? ws.onMessage : bt.onMessage;
 
   const {
@@ -91,11 +102,10 @@ export default function AutoNav() {
 
   return (
     <div className="flex h-svh overflow-hidden">
-
       {/* 左側: フィールドマップ */}
-      <div className="flex flex-1 items-center justify-center bg-white">
+      <div className="flex w-[60svh] flex-1 items-center justify-center bg-white">
         <div className="relative">
-          <img src={FieldSvg} alt="Field" className="h-[80svh] w-auto" />
+          <img src={FieldSvg} alt="Field" className="h-[80svh] w-[40svh]" />
           <img
             src={KumaSvg}
             alt="RoboKuma"
@@ -110,8 +120,7 @@ export default function AutoNav() {
       </div>
 
       {/* 右側: コントロールパネル */}
-      <div className="w-80 overflow-y-auto border-l p-4">
-
+      <div className="w-[calc(100%-60svh)] overflow-y-auto border-l p-4">
         {/* Header */}
         <div className="mb-4 flex items-center gap-3">
           <Button variant="ghost" size="icon-sm" asChild>
@@ -124,28 +133,33 @@ export default function AutoNav() {
           <div className="flex rounded-md border">
             <button
               type="button"
-              className={`px-3 py-1 text-sm rounded-l-md ${connectionMode === 'ble' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+              className={`rounded-l-md px-3 py-1 text-sm ${connectionMode === 'ble' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
               onClick={() => setConnectionMode('ble')}
             >
               BLE
             </button>
             <button
               type="button"
-              className={`px-3 py-1 text-sm rounded-r-md ${connectionMode === 'ws' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+              className={`rounded-r-md px-3 py-1 text-sm ${connectionMode === 'ws' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
               onClick={() => setConnectionMode('ws')}
             >
               WebSocket
             </button>
           </div>
 
-          <Button variant="ghost" size="icon-sm" onClick={toggleFullscreen} className="ml-auto">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={toggleFullscreen}
+            className="ml-auto"
+          >
             {isFullscreen ? <Minimize /> : <Maximize />}
           </Button>
         </div>
 
         {/* Connection panel */}
         <div className="mb-4 rounded-lg border p-4">
-          <h2 className="mb-3 font-bold text-sm text-muted-foreground">接続</h2>
+          <h2 className="mb-3 font-bold text-muted-foreground text-sm">接続</h2>
 
           {connectionMode === 'ws' && (
             <input
@@ -189,11 +203,17 @@ export default function AutoNav() {
         </div>
 
         {/* Court selector */}
-        <CourtSelector court={court} onSelect={sendSetCourt} disabled={!isConnected} />
+        <CourtSelector
+          court={court}
+          onSelect={sendSetCourt}
+          disabled={!isConnected}
+        />
 
         {/* Mode */}
         <section className="mb-4 rounded-lg border p-4">
-          <h2 className="mb-3 font-bold text-sm text-muted-foreground">モード</h2>
+          <h2 className="mb-3 font-bold text-muted-foreground text-sm">
+            モード
+          </h2>
           <div className="flex gap-2">
             <Button
               variant={isAuto ? 'outline' : 'default'}
@@ -214,7 +234,9 @@ export default function AutoNav() {
 
         {/* Auto sequence controls */}
         <section className="mb-4 rounded-lg border p-4">
-          <h2 className="mb-3 font-bold text-sm text-muted-foreground">自動シーケンス</h2>
+          <h2 className="mb-3 font-bold text-muted-foreground text-sm">
+            自動シーケンス
+          </h2>
           <div className="flex items-center gap-2">
             <Button
               variant="default"
@@ -233,14 +255,16 @@ export default function AutoNav() {
               停止
             </Button>
             {progress && (
-              <span className="text-sm text-muted-foreground">進捗: {progress}</span>
+              <span className="text-muted-foreground text-sm">
+                進捗: {progress}
+              </span>
             )}
           </div>
         </section>
 
         {/* Waypoints */}
         <section className="mb-4 rounded-lg border p-4">
-          <h2 className="mb-3 font-bold text-sm text-muted-foreground">
+          <h2 className="mb-3 font-bold text-muted-foreground text-sm">
             ウェイポイント
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -270,7 +294,7 @@ export default function AutoNav() {
 
         {/* Status */}
         <section className="mb-4 rounded-lg border p-4">
-          <h2 className="mb-3 font-bold text-sm text-muted-foreground">
+          <h2 className="mb-3 font-bold text-muted-foreground text-sm">
             ステータス
           </h2>
           <div className="flex items-center gap-2">
@@ -280,7 +304,7 @@ export default function AutoNav() {
               {navStatus}
             </span>
             {currentWaypoint && (
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 → {currentWaypoint}
               </span>
             )}
@@ -289,7 +313,7 @@ export default function AutoNav() {
 
         {/* Log */}
         <section className="rounded-lg border p-4">
-          <h2 className="mb-3 font-bold text-sm text-muted-foreground">
+          <h2 className="mb-3 font-bold text-muted-foreground text-sm">
             ログ（最新 20 件）
           </h2>
           {log.length === 0 ? (
@@ -306,7 +330,6 @@ export default function AutoNav() {
             </ul>
           )}
         </section>
-
       </div>
     </div>
   );
