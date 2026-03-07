@@ -5,6 +5,7 @@ import {
   Maximize,
   Minimize,
   Play,
+  RotateCcw,
   Square,
   Wifi,
   WifiOff,
@@ -34,6 +35,7 @@ const STATUS_STYLES: Record<string, string> = {
   ARRIVED: 'bg-green-200 text-green-800',
   ERROR: 'bg-red-200 text-red-800',
   CANCELLED: 'bg-orange-200 text-orange-800',
+  RELOCATING: 'bg-purple-200 text-purple-800',
 };
 
 type ConnectionMode = 'ble' | 'ws';
@@ -41,6 +43,7 @@ type ConnectionMode = 'ble' | 'ws';
 export default function AutoNav() {
   const [connectionMode, setConnectionMode] = useState<ConnectionMode>('ble');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [flashVisible, setFlashVisible] = useState(false);
 
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
@@ -52,6 +55,7 @@ export default function AutoNav() {
     if (document.fullscreenElement) document.exitFullscreen();
     else document.documentElement.requestFullscreen();
   }
+
   const [wsUrl, setWsUrl] = useState(
     // HTTPS 環境では Vite proxy 経由の wss:// を使用（Mixed Content 回避）
     `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`,
@@ -80,15 +84,30 @@ export default function AutoNav() {
     robotPosX,
     robotPosY,
     robotAngle,
+    isAlertFlashing,
+    failedSeqIndex,
+    relocatingCountdown,
     sendNavMode,
     sendNavGoal,
     sendSetCourt,
-    sendStartAuto,
+    sendStartAutoFrom,
     sendStopAuto,
   } = useAutoNav(onMessage, isConnected, sendJson);
 
+  // エラー時の赤白交互点滅（500ms 間隔）
+  useEffect(() => {
+    if (!isAlertFlashing) {
+      setFlashVisible(false);
+      return;
+    }
+    const interval = setInterval(() => setFlashVisible((v) => !v), 500);
+    return () => clearInterval(interval);
+  }, [isAlertFlashing]);
+
   const isAuto = navStatus !== 'MANUAL';
   const isNavigating = navStatus === 'NAVIGATING';
+  const isRelocating = navStatus === 'RELOCATING';
+  const isBusy = isNavigating || isRelocating;
 
   function handleConnect() {
     if (connectionMode === 'ws') {
@@ -100,8 +119,32 @@ export default function AutoNav() {
     }
   }
 
+  function handleStartAutoFrom(index: number) {
+    if (index > 0) {
+      const wpName = WAYPOINTS[index];
+      const ok = window.confirm(
+        `ロボットを ${wpName} の位置に置きましたか？\n\n確認後、3秒のカウントダウンでナビゲーションを開始します。`,
+      );
+      if (!ok) return;
+    }
+    sendStartAutoFrom(index);
+  }
+
   return (
     <div className="flex h-svh overflow-hidden">
+      {/* 赤白交互点滅オーバーレイ（エラー発生時） */}
+      {isAlertFlashing && (
+        <div
+          className="pointer-events-none fixed inset-0 z-40"
+          style={{
+            backgroundColor: flashVisible
+              ? 'rgba(239, 68, 68, 0.45)'
+              : 'rgba(255, 255, 255, 0.55)',
+            transition: 'background-color 80ms',
+          }}
+        />
+      )}
+
       {/* 左側: フィールドマップ */}
       <div className="flex w-[60svh] flex-1 items-center justify-center bg-white">
         <div className="relative">
@@ -237,11 +280,13 @@ export default function AutoNav() {
           <h2 className="mb-3 font-bold text-muted-foreground text-sm">
             自動シーケンス
           </h2>
-          <div className="flex items-center gap-2">
+
+          {/* Control buttons */}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             <Button
               variant="default"
-              onClick={sendStartAuto}
-              disabled={!isAuto || isNavigating}
+              onClick={() => handleStartAutoFrom(0)}
+              disabled={!isAuto || isBusy}
             >
               <Play className="size-4" />
               自動開始
@@ -260,12 +305,80 @@ export default function AutoNav() {
               </span>
             )}
           </div>
+
+          {/* リローカライズ中のカウントダウン表示 */}
+          {isRelocating && relocatingCountdown !== null && (
+            <div className="mb-3 rounded-md bg-purple-100 px-3 py-2 text-purple-800 text-sm">
+              {currentWaypoint} でリローカライズ中…{' '}
+              <span className="font-bold">{relocatingCountdown} 秒</span>
+              後にナビゲーションを開始します
+            </div>
+          )}
+
+          {/* シーケンスリスト */}
+          <div className="space-y-1">
+            {WAYPOINTS.map((wp, i) => {
+              const isFailed = failedSeqIndex === i;
+              const isCurrent =
+                currentWaypoint === wp && (isNavigating || isRelocating);
+              const isVisited =
+                navStatus !== 'MANUAL' &&
+                failedSeqIndex !== null &&
+                i < failedSeqIndex;
+
+              return (
+                <div
+                  key={wp}
+                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 ${
+                    isFailed
+                      ? 'bg-red-50 ring-1 ring-red-300'
+                      : isCurrent
+                        ? 'bg-yellow-50 ring-1 ring-yellow-300'
+                        : isVisited
+                          ? 'bg-gray-50'
+                          : ''
+                  }`}
+                >
+                  <span
+                    className={`w-5 text-center font-mono text-sm ${
+                      isVisited
+                        ? 'text-gray-400'
+                        : isFailed
+                          ? 'text-red-500'
+                          : 'text-muted-foreground'
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                  <span
+                    className={`flex-1 text-sm ${isVisited ? 'text-gray-400 line-through' : ''}`}
+                  >
+                    {wp}
+                  </span>
+                  <Button
+                    variant={isFailed ? 'default' : 'outline'}
+                    size="sm"
+                    className={
+                      isFailed
+                        ? 'bg-orange-500 text-white hover:bg-orange-600'
+                        : ''
+                    }
+                    onClick={() => handleStartAutoFrom(i)}
+                    disabled={!isAuto || isBusy}
+                  >
+                    <RotateCcw className="size-3" />
+                    ここから
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
         </section>
 
         {/* Waypoints */}
         <section className="mb-4 rounded-lg border p-4">
           <h2 className="mb-3 font-bold text-muted-foreground text-sm">
-            ウェイポイント
+            ウェイポイント（単発）
           </h2>
           <div className="flex flex-wrap gap-2">
             {WAYPOINTS.map((wp) => (
@@ -273,7 +386,7 @@ export default function AutoNav() {
                 key={wp}
                 variant={currentWaypoint === wp ? 'default' : 'outline'}
                 onClick={() => sendNavGoal(wp)}
-                disabled={!isAuto || isNavigating}
+                disabled={!isAuto || isBusy}
               >
                 {wp}
               </Button>

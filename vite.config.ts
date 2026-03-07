@@ -5,9 +5,14 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: '/khr2026_team1_bt_controller/',
-  plugins: [react(), tailwindcss(), basicSSL()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    // localhost からのアクセスは HTTP で BLE も動作するため、dev のみ HTTPS を有効化
+    ...(mode === 'development' ? [basicSSL()] : []),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -23,4 +28,14 @@ export default defineConfig({
       },
     },
   },
-});
+  preview: {
+    host: true,
+    proxy: {
+      '/ws': {
+        target: 'ws://localhost:8080',
+        ws: true,
+        changeOrigin: true,
+      },
+    },
+  },
+}));
