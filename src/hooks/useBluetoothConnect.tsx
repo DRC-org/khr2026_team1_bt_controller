@@ -70,44 +70,71 @@ export function useBluetoothConnect() {
       const rxCharacteristic = await fetchRxCharacteristic(server);
       setBluetoothRxCharacteristic(rxCharacteristic);
 
-      if (rxCharacteristic) {
-        rxCharacteristic.addEventListener(
-          'characteristicvaluechanged',
-          (event) => {
-            const now = performance.now();
-            const value = (event.target as BluetoothRemoteGATTCharacteristic)
-              .value;
-            const byteLen = value?.byteLength ?? 0;
+    if (rxCharacteristic) {
+      // BLE の MTU 制限で JSON が複数通知に分割されることがあるため、
+      // {} が完結するまでチャンクを蓄積し、完成したオブジェクトだけをコールバックする
+      let rxBuffer = '';
 
-            // === BLE DEBUG ===
-            if (bleDebug.lastEventTime > 0) {
-              const interval = now - bleDebug.lastEventTime;
-              if (interval > bleDebug.maxEventInterval)
-                bleDebug.maxEventInterval = interval;
+      rxCharacteristic.addEventListener(
+        'characteristicvaluechanged',
+        (event) => {
+          const now = performance.now();
+          const value = (event.target as BluetoothRemoteGATTCharacteristic)
+            .value;
+          const byteLen = value?.byteLength ?? 0;
+
+          // === BLE DEBUG ===
+          if (bleDebug.lastEventTime > 0) {
+            const interval = now - bleDebug.lastEventTime;
+            if (interval > bleDebug.maxEventInterval)
+              bleDebug.maxEventInterval = interval;
+          }
+          bleDebug.lastEventTime = now;
+          bleDebug.eventCount++;
+          bleDebug.totalBytes += byteLen;
+
+          if (now - bleDebug.lastLogTime > 3000) {
+            console.log(
+              `[BLE DEBUG] ${bleDebug.eventCount} events in 3s (${(bleDebug.eventCount / 3).toFixed(1)}/s) | ` +
+                `maxInterval: ${bleDebug.maxEventInterval.toFixed(0)}ms | ` +
+                `avgSize: ${bleDebug.eventCount > 0 ? (bleDebug.totalBytes / bleDebug.eventCount).toFixed(0) : 0}B`,
+            );
+            bleDebug.eventCount = 0;
+            bleDebug.maxEventInterval = 0;
+            bleDebug.totalBytes = 0;
+            bleDebug.lastLogTime = now;
+          }
+
+          rxBuffer += new TextDecoder('utf-8').decode(value);
+
+          // {} の深さをカウントし、完結した JSON オブジェクトを順番に取り出す
+          let depth = 0;
+          let objectStart = -1;
+          let consumed = 0;
+          for (let i = 0; i < rxBuffer.length; i++) {
+            const ch = rxBuffer[i];
+            if (ch === '{') {
+              if (depth === 0) objectStart = i;
+              depth++;
+            } else if (ch === '}') {
+              depth--;
+              if (depth === 0 && objectStart >= 0) {
+                messageCallbackRef.current?.(rxBuffer.slice(objectStart, i + 1));
+                consumed = i + 1;
+                objectStart = -1;
+              }
             }
-            bleDebug.lastEventTime = now;
-            bleDebug.eventCount++;
-            bleDebug.totalBytes += byteLen;
+          }
+          rxBuffer = rxBuffer.slice(consumed);
 
-            if (now - bleDebug.lastLogTime > 3000) {
-              console.log(
-                `[BLE DEBUG] ${bleDebug.eventCount} events in 3s (${(bleDebug.eventCount / 3).toFixed(1)}/s) | ` +
-                  `maxInterval: ${bleDebug.maxEventInterval.toFixed(0)}ms | ` +
-                  `avgSize: ${bleDebug.eventCount > 0 ? (bleDebug.totalBytes / bleDebug.eventCount).toFixed(0) : 0}B`,
-              );
-              bleDebug.eventCount = 0;
-              bleDebug.maxEventInterval = 0;
-              bleDebug.totalBytes = 0;
-              bleDebug.lastLogTime = now;
-            }
-
-            const decoder = new TextDecoder('utf-8');
-            const message = decoder.decode(value);
-            messageCallbackRef.current?.(message);
-          },
-        );
-        await rxCharacteristic.startNotifications();
-      }
+          // 不完全なデータが溜まりすぎたら破棄（安全弁）
+          if (rxBuffer.length > 8192) {
+            rxBuffer = '';
+          }
+        },
+      );
+      await rxCharacteristic.startNotifications();
+    }
     } catch (e) {
       console.error('Bluetooth connection failed:', e);
       setIsDeviceConnected(false);
