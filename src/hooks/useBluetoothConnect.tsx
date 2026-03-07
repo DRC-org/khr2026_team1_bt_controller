@@ -42,9 +42,12 @@ export function useBluetoothConnect() {
       return;
     }
 
-    const device = await searchBtDevice().catch((e) => {
-      console.error(e);
-      bluetoothDevice?.gatt?.disconnect();
+    const device = await searchBtDevice().catch((e: Error) => {
+      // ユーザーがキャンセルした場合は正常な操作なのでエラーログを出さない
+      if (e.name !== 'NotFoundError') {
+        console.error(e);
+        bluetoothDevice?.gatt?.disconnect();
+      }
       return undefined;
     });
     if (device === undefined) return;
@@ -57,52 +60,60 @@ export function useBluetoothConnect() {
     });
     setBluetoothDevice(device);
 
-    const server = await device.gatt?.connect();
-    if (server === undefined) return;
+    try {
+      const server = await device.gatt?.connect();
+      if (server === undefined) return;
 
-    const txCharacteristic = await fetchTxCharacteristic(server);
-    setBluetoothTxCharacteristic(txCharacteristic);
+      const txCharacteristic = await fetchTxCharacteristic(server);
+      setBluetoothTxCharacteristic(txCharacteristic);
 
-    const rxCharacteristic = await fetchRxCharacteristic(server);
-    setBluetoothRxCharacteristic(rxCharacteristic);
+      const rxCharacteristic = await fetchRxCharacteristic(server);
+      setBluetoothRxCharacteristic(rxCharacteristic);
 
-    if (rxCharacteristic) {
-      rxCharacteristic.addEventListener(
-        'characteristicvaluechanged',
-        (event) => {
-          const now = performance.now();
-          const value = (event.target as BluetoothRemoteGATTCharacteristic)
-            .value;
-          const byteLen = value?.byteLength ?? 0;
+      if (rxCharacteristic) {
+        rxCharacteristic.addEventListener(
+          'characteristicvaluechanged',
+          (event) => {
+            const now = performance.now();
+            const value = (event.target as BluetoothRemoteGATTCharacteristic)
+              .value;
+            const byteLen = value?.byteLength ?? 0;
 
-          // === BLE DEBUG ===
-          if (bleDebug.lastEventTime > 0) {
-            const interval = now - bleDebug.lastEventTime;
-            if (interval > bleDebug.maxEventInterval)
-              bleDebug.maxEventInterval = interval;
-          }
-          bleDebug.lastEventTime = now;
-          bleDebug.eventCount++;
-          bleDebug.totalBytes += byteLen;
+            // === BLE DEBUG ===
+            if (bleDebug.lastEventTime > 0) {
+              const interval = now - bleDebug.lastEventTime;
+              if (interval > bleDebug.maxEventInterval)
+                bleDebug.maxEventInterval = interval;
+            }
+            bleDebug.lastEventTime = now;
+            bleDebug.eventCount++;
+            bleDebug.totalBytes += byteLen;
 
-          if (now - bleDebug.lastLogTime > 3000) {
-            console.log(
-              `[BLE DEBUG] ${bleDebug.eventCount} events in 3s (${(bleDebug.eventCount / 3).toFixed(1)}/s) | ` +
-                `maxInterval: ${bleDebug.maxEventInterval.toFixed(0)}ms | ` +
-                `avgSize: ${bleDebug.eventCount > 0 ? (bleDebug.totalBytes / bleDebug.eventCount).toFixed(0) : 0}B`,
-            );
-            bleDebug.eventCount = 0;
-            bleDebug.maxEventInterval = 0;
-            bleDebug.totalBytes = 0;
-            bleDebug.lastLogTime = now;
-          }
+            if (now - bleDebug.lastLogTime > 3000) {
+              console.log(
+                `[BLE DEBUG] ${bleDebug.eventCount} events in 3s (${(bleDebug.eventCount / 3).toFixed(1)}/s) | ` +
+                  `maxInterval: ${bleDebug.maxEventInterval.toFixed(0)}ms | ` +
+                  `avgSize: ${bleDebug.eventCount > 0 ? (bleDebug.totalBytes / bleDebug.eventCount).toFixed(0) : 0}B`,
+              );
+              bleDebug.eventCount = 0;
+              bleDebug.maxEventInterval = 0;
+              bleDebug.totalBytes = 0;
+              bleDebug.lastLogTime = now;
+            }
 
-          const decoder = new TextDecoder('utf-8');
-          const message = decoder.decode(value);
-          messageCallbackRef.current?.(message);
-        },
-      );
-      await rxCharacteristic.startNotifications();
+            const decoder = new TextDecoder('utf-8');
+            const message = decoder.decode(value);
+            messageCallbackRef.current?.(message);
+          },
+        );
+        await rxCharacteristic.startNotifications();
+      }
+    } catch (e) {
+      console.error('Bluetooth connection failed:', e);
+      setIsDeviceConnected(false);
+      setBluetoothTxCharacteristic(undefined);
+      setBluetoothRxCharacteristic(undefined);
+      device.gatt?.disconnect();
     }
   }
 
