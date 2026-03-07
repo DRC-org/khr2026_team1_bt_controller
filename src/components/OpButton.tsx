@@ -29,22 +29,17 @@ export default function OpButton({
     action: string;
     characteristic: BluetoothRemoteGATTCharacteristic | undefined;
   }) {
-  async function sendHandCommand(
+  function sendHandCommand(
     target: string,
     control_type: string,
     action: string,
   ) {
     if (!characteristic) return;
 
-    const command = {
-      type: 'hand_control',
-      target: `${target}_${hid}`,
-      control_type,
-      action,
-    };
-
-    await sendJsonData(command, characteristic);
-    console.log('sent');
+    sendJsonData(
+      { type: 'hand_control', target: `${target}_${hid}`, control_type, action },
+      characteristic,
+    );
   }
 
   return (

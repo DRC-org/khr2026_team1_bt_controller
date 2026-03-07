@@ -65,9 +65,7 @@ export default function Controller() {
       l_y: sign * joystickLFields.y,
       r: joystickRFields.x,
     };
-    (async () => {
-      await sendJsonData(txData, bluetoothTxCharacteristic);
-    })();
+    sendJsonData(txData, bluetoothTxCharacteristic);
   });
 
   useDisableContextMenu();
