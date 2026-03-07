@@ -196,165 +196,167 @@ export default function Controller() {
         </Button>
       </div>
 
-      <div className="pointer-events-none absolute top-1/3 left-5 z-10 flex w-[calc(50%-20svh-2.5rem)] -translate-y-1/2 items-center gap-3">
-        <div className="flex flex-1 flex-col gap-3">
-          <OpButton
-            target="yagura"
-            hid={1}
-            control_type="pos"
-            action="up"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <ArrowUp className="size-6" />
-          </OpButton>
-          <OpButton
-            target="yagura"
-            hid={1}
-            control_type="pos"
-            action="stopped"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Square className="size-5" />
-          </OpButton>
-          <OpButton
-            target="yagura"
-            hid={1}
-            control_type="pos"
-            action="down"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <ArrowDown className="size-6" />
-          </OpButton>
-        </div>
-        <div className="flex flex-1 flex-col gap-3">
-          <OpButton
-            target="yagura"
-            hid={1}
-            control_type="state"
-            action="open"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Maximize2 className="size-6" />
-            Open
-          </OpButton>
-          <OpButton
-            target="yagura"
-            hid={1}
-            control_type="state"
-            action="close"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Minimize2 className="size-6" />
-            Close
-          </OpButton>
-        </div>
-        <div className="flex flex-1 flex-col gap-3">
-          <OpButton
-            target="ring"
-            hid={1}
-            control_type="state"
-            action="open"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Maximize2 className="size-6" />
-            Open
-          </OpButton>
-          <OpButton
-            target="ring"
-            hid={1}
-            control_type="state"
-            action="close"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Minimize2 className="size-6" />
-            Close
-          </OpButton>
+      {/* hid=1 パネル（左） */}
+      <div className="pointer-events-none absolute top-1/2 left-3 z-10 w-[calc(50%-20svh-1rem)] -translate-y-1/2">
+        <div className="flex flex-col gap-2">
+          <p className="text-center text-xs font-bold text-primary/60">― 1 ―</p>
+
+          {/* 昇降 1 */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-center text-xs font-semibold text-green-700">昇降</p>
+            <div className="flex gap-1.5">
+              <div className="flex-1">
+                <OpButton target="yagura" hid={1} control_type="pos" action="up" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <ArrowUp className="size-5" />
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="yagura" hid={1} control_type="pos" action="stopped" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Square className="size-4" />
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="yagura" hid={1} control_type="pos" action="down" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <ArrowDown className="size-5" />
+                </OpButton>
+              </div>
+            </div>
+            <div className="flex gap-1.5">
+              <div className="flex-1">
+                <OpButton target="yagura" hid={1} control_type="state" action="open" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Maximize2 className="size-5" />
+                  Open
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="yagura" hid={1} control_type="state" action="close" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Minimize2 className="size-5" />
+                  Close
+                </OpButton>
+              </div>
+            </div>
+          </div>
+
+          {/* リング 1 */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-center text-xs font-semibold text-amber-700">リング</p>
+            <div className="flex gap-1.5">
+              <div className="flex-1">
+                <OpButton target="ring" hid={1} control_type="pos" action="pickup" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Dice1 className="size-5" />
+                  拾取
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="ring" hid={1} control_type="pos" action="yagura" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Dice2 className="size-5" />
+                  櫓
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="ring" hid={1} control_type="pos" action="honmaru" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Dice3 className="size-5" />
+                  本丸
+                </OpButton>
+              </div>
+            </div>
+            <div className="flex gap-1.5">
+              <div className="flex-1">
+                <OpButton target="ring" hid={1} control_type="state" action="open" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Maximize2 className="size-5" />
+                  Grab
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="ring" hid={1} control_type="state" action="close" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Minimize2 className="size-5" />
+                  Rel.
+                </OpButton>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="pointer-events-none absolute top-1/3 right-5 z-10 flex w-[calc(50%-20svh-2.5rem)] -translate-y-1/2 items-center gap-3">
-        <div className="flex flex-1 flex-col gap-3">
-          <OpButton
-            target="ring"
-            hid={1}
-            control_type="pos"
-            action="pickup"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Dice1 className="size-6" />
-            Grab
-          </OpButton>
-          <OpButton
-            target="ring"
-            hid={1}
-            control_type="pos"
-            action="yagura"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Dice2 className="size-6" />
-            Rel. 25
-          </OpButton>
-          <OpButton
-            target="ring"
-            hid={1}
-            control_type="pos"
-            action="honmaru"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Dice3 className="size-6" />
-            Rel. 50
-          </OpButton>
-        </div>
-        <div className="flex flex-1 flex-col gap-3">
-          <OpButton
-            target="yagura"
-            hid={2}
-            control_type="state"
-            action="open"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Maximize2 className="size-6" />
-            Open
-          </OpButton>
-          <OpButton
-            target="yagura"
-            hid={2}
-            control_type="state"
-            action="close"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Minimize2 className="size-6" />
-            Close
-          </OpButton>
-        </div>
-        <div className="flex flex-1 flex-col gap-3">
-          <OpButton
-            target="yagura"
-            hid={2}
-            control_type="pos"
-            action="up"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <ArrowUp className="size-6" />
-          </OpButton>
-          <OpButton
-            target="yagura"
-            hid={2}
-            control_type="pos"
-            action="stopped"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <Square className="size-5" />
-          </OpButton>
-          <OpButton
-            target="yagura"
-            hid={2}
-            control_type="pos"
-            action="down"
-            characteristic={bluetoothTxCharacteristic}
-          >
-            <ArrowDown className="size-6" />
-          </OpButton>
+      {/* hid=2 パネル（右） */}
+      <div className="pointer-events-none absolute top-1/2 right-3 z-10 w-[calc(50%-20svh-1rem)] -translate-y-1/2">
+        <div className="flex flex-col gap-2">
+          <p className="text-center text-xs font-bold text-primary/60">― 2 ―</p>
+
+          {/* 昇降 2 */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-center text-xs font-semibold text-green-700">昇降</p>
+            <div className="flex gap-1.5">
+              <div className="flex-1">
+                <OpButton target="yagura" hid={2} control_type="pos" action="up" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <ArrowUp className="size-5" />
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="yagura" hid={2} control_type="pos" action="stopped" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Square className="size-4" />
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="yagura" hid={2} control_type="pos" action="down" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <ArrowDown className="size-5" />
+                </OpButton>
+              </div>
+            </div>
+            <div className="flex gap-1.5">
+              <div className="flex-1">
+                <OpButton target="yagura" hid={2} control_type="state" action="open" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Maximize2 className="size-5" />
+                  Open
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="yagura" hid={2} control_type="state" action="close" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Minimize2 className="size-5" />
+                  Close
+                </OpButton>
+              </div>
+            </div>
+          </div>
+
+          {/* リング 2 */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-center text-xs font-semibold text-amber-700">リング</p>
+            <div className="flex gap-1.5">
+              <div className="flex-1">
+                <OpButton target="ring" hid={2} control_type="pos" action="pickup" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Dice1 className="size-5" />
+                  拾取
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="ring" hid={2} control_type="pos" action="yagura" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Dice2 className="size-5" />
+                  櫓
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="ring" hid={2} control_type="pos" action="honmaru" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Dice3 className="size-5" />
+                  本丸
+                </OpButton>
+              </div>
+            </div>
+            <div className="flex gap-1.5">
+              <div className="flex-1">
+                <OpButton target="ring" hid={2} control_type="state" action="open" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Maximize2 className="size-5" />
+                  Grab
+                </OpButton>
+              </div>
+              <div className="flex-1">
+                <OpButton target="ring" hid={2} control_type="state" action="close" className="h-16" characteristic={bluetoothTxCharacteristic}>
+                  <Minimize2 className="size-5" />
+                  Rel.
+                </OpButton>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
