@@ -25,8 +25,8 @@ const WAYPOINTS = [
   'ring_pickup_1',
   'yagura_release_1',
   'yagura_release_2',
-  'yagura_pickup_2',
   'ring_pickup_2',
+  'yagura_pickup_2',
   'yagura_release_3',
   'honmaru',
 ];
