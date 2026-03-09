@@ -154,6 +154,9 @@ export function usePIDCharts(
         }
       }
 
+      // p_terms がないメッセージはステータスメッセージ（PID解析用ではない）→スキップ
+      if (!data.p_terms || !data.i_terms || !data.d_terms || !data.target_rpms) return;
+
       const now = Date.now();
       const {
         m3508_rpms,
@@ -179,7 +182,7 @@ export function usePIDCharts(
       dTermChart.data.datasets[0].data.push({ x: now, y: d_terms[motor] });
       outputCurrent.data.datasets[0].data.push({
         x: now,
-        y: output_currents[motor],
+        y: output_currents?.[motor] ?? 0,
       });
       targetRpmChart.data.datasets[0].data.push({
         x: now,

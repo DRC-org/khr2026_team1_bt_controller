@@ -53,12 +53,8 @@ export default function PIDTuning() {
         kd: gains.kd,
       };
 
-      try {
-        await sendJsonData([command], bluetoothTxCharacteristic);
-        console.log('PID gains sent:', command);
-      } catch (error) {
-        console.error('Failed to send PID gains:', error);
-      }
+      sendJsonData(command, bluetoothTxCharacteristic);
+      console.log('PID gains sent:', command);
     },
     [bluetoothTxCharacteristic],
   );
