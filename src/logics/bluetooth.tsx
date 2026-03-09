@@ -10,12 +10,25 @@ const RX_CHARACTERISTIC_UUID = '3ecd3272-0f80-4518-ad58-78aa9af3ec9d';
 // ジョイスティックのように高頻度で呼ばれても、前の write が終わるまで次はキューで待機し
 // 同時実行は起きない。write 失敗時はキューを詰まらせないよう catch で握り潰す。
 let writeQueue: Promise<void> = Promise.resolve();
+let writeQueueSize = 0;
 
 export function sendJsonData(
   // biome-ignore lint/complexity/noBannedTypes: Temporary object type
   data: Object,
   txCharacteristic: BluetoothRemoteGATTCharacteristic,
 ): void {
+  // Drop high-frequency joystick updates if the queue is growing
+  if (
+    typeof data === 'object' &&
+    data !== null &&
+    'type' in data &&
+    (data as { type?: string }).type === 'joystick' &&
+    writeQueueSize > 1
+  ) {
+    return;
+  }
+
+  writeQueueSize++;
   writeQueue = writeQueue
     .then(() => {
       const encoder = new TextEncoder();
@@ -24,6 +37,9 @@ export function sendJsonData(
     })
     .catch(() => {
       // 切断・失敗時もキューを詰まらせない
+    })
+    .finally(() => {
+      writeQueueSize--;
     });
 }
 

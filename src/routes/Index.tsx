@@ -10,8 +10,12 @@ import {
 export default function Index() {
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-xl flex-col justify-center gap-3 p-5">
-      <p className='-mb-1 text-center'>関西春ロボコン 2026 / DRC 輪投げの達人</p>
-      <h1 className='mb-5 text-center font-bold text-2xl text-blue-600'>Bluetooth Controller</h1>
+      <p className="-mb-1 text-center">
+        関西春ロボコン 2026 / DRC 輪投げの達人
+      </p>
+      <h1 className="mb-5 text-center font-bold text-2xl text-blue-600">
+        Bluetooth Controller
+      </h1>
 
       <Item variant="outline" asChild>
         <a href="#/controller">
@@ -34,7 +38,9 @@ export default function Index() {
           </ItemMedia>
           <ItemContent>
             <ItemTitle className="font-bold">Auto Nav</ItemTitle>
-            <ItemDescription>自律走行のモード切替・ウェイポイント指定</ItemDescription>
+            <ItemDescription>
+              自律走行のモード切替・ウェイポイント指定
+            </ItemDescription>
           </ItemContent>
         </a>
       </Item>

@@ -145,8 +145,8 @@ export function usePIDCharts(
       if (data.m3508_rpms === undefined) return;
 
       // Only trigger React re-render when gains actually change
-      if (data.pid_gains && onGainsUpdateRef.current) {
-        const g = data.pid_gains;
+      if (data.pid_data?.gains && onGainsUpdateRef.current) {
+        const g = data.pid_data.gains;
         const prev = lastGainsRef.current;
         if (!prev || prev.kp !== g.kp || prev.ki !== g.ki || prev.kd !== g.kd) {
           lastGainsRef.current = g;
@@ -154,47 +154,40 @@ export function usePIDCharts(
         }
       }
 
-      // p_terms がないメッセージはステータスメッセージ（PID解析用ではない）→スキップ
-      if (!data.p_terms || !data.i_terms || !data.d_terms || !data.target_rpms) return;
+      // pid_data がないメッセージはステータスメッセージ（PID解析用ではない）→スキップ
+      if (!data.pid_data) return;
+      // 選択中のモーター以外のデータが来た場合もスキップ（バックエンドの切り替え遅延考慮）
+      if (data.pid_data.motor !== selectedMotorRef.current) return;
 
       const now = Date.now();
-      const {
-        m3508_rpms,
-        target_rpms,
-        output_currents,
-        p_terms,
-        i_terms,
-        d_terms,
-      } = data;
-      const motor = selectedMotorRef.current;
+      const motor = data.pid_data.motor;
+      const { target_rpm, output_current, p, i, d } = data.pid_data;
 
       // Data push only - no chart.update(), no trimming
       // Streaming plugin renders at frameRate and auto-trims via ttl
-      pidTerms.data.datasets[0].data.push({ x: now, y: p_terms[motor] });
-      pidTerms.data.datasets[1].data.push({ x: now, y: i_terms[motor] });
-      pidTerms.data.datasets[2].data.push({ x: now, y: d_terms[motor] });
+      pidTerms.data.datasets[0].data.push({ x: now, y: p });
+      pidTerms.data.datasets[1].data.push({ x: now, y: i });
+      pidTerms.data.datasets[2].data.push({ x: now, y: d });
 
-      rpmCompare.data.datasets[0].data.push({ x: now, y: target_rpms[motor] });
+      rpmCompare.data.datasets[0].data.push({ x: now, y: target_rpm });
       rpmCompare.data.datasets[1].data.push({ x: now, y: m3508_rpms[motor] });
 
-      pTermChart.data.datasets[0].data.push({ x: now, y: p_terms[motor] });
-      iTermChart.data.datasets[0].data.push({ x: now, y: i_terms[motor] });
-      dTermChart.data.datasets[0].data.push({ x: now, y: d_terms[motor] });
-      outputCurrent.data.datasets[0].data.push({
-        x: now,
-        y: output_currents?.[motor] ?? 0,
-      });
-      targetRpmChart.data.datasets[0].data.push({
-        x: now,
-        y: target_rpms[motor],
-      });
+      pTermChart.data.datasets[0].data.push({ x: now, y: p });
+      iTermChart.data.datasets[0].data.push({ x: now, y: i });
+      dTermChart.data.datasets[0].data.push({ x: now, y: d });
+      outputCurrent.data.datasets[0].data.push({ x: now, y: output_current });
+      targetRpmChart.data.datasets[0].data.push({ x: now, y: target_rpm });
       rpmError.data.datasets[0].data.push({
         x: now,
-        y: target_rpms[motor] - m3508_rpms[motor],
+        y: target_rpm - m3508_rpms[motor],
       });
     } catch (_e) {
       dbg.parseErrors++;
-      console.error('Invalid JSON message:', msg.slice(0, 100), `(${msg.length}B)`);
+      console.error(
+        'Invalid JSON message:',
+        msg.slice(0, 100),
+        `(${msg.length}B)`,
+      );
     }
 
     // === DEBUG: measure processMessage time ===
@@ -204,7 +197,8 @@ export function usePIDCharts(
 
     // Log & update UI every 3 seconds
     if (t0 - dbg.lastLogTime > 3000) {
-      const datasetSize = chartRefs.pidTerms.current?.data.datasets[0].data.length ?? 0;
+      const datasetSize =
+        chartRefs.pidTerms.current?.data.datasets[0].data.length ?? 0;
       const stats: DebugStats = {
         msgRate: (dbg.msgCount / 3).toFixed(1),
         avgProcessTime: (dbg.totalProcessTime / dbg.msgCount).toFixed(2),
@@ -215,10 +209,10 @@ export function usePIDCharts(
       };
       console.log(
         `[PID DEBUG] ${dbg.msgCount} msgs in 3s (${stats.msgRate}/s) | ` +
-        `processMsg: avg=${stats.avgProcessTime}ms, max=${stats.maxProcessTime}ms | ` +
-        `maxInterval: ${stats.maxInterval}ms | ` +
-        `datasetSize: ${datasetSize} | ` +
-        `parseErrors: ${dbg.parseErrors}`
+          `processMsg: avg=${stats.avgProcessTime}ms, max=${stats.maxProcessTime}ms | ` +
+          `maxInterval: ${stats.maxInterval}ms | ` +
+          `datasetSize: ${datasetSize} | ` +
+          `parseErrors: ${dbg.parseErrors}`,
       );
       setDebugStats(stats);
       dbg.msgCount = 0;

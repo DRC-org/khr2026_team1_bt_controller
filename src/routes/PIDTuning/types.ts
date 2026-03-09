@@ -11,12 +11,15 @@ export interface PIDGains {
 
 export interface PIDData {
   m3508_rpms: MotorData;
-  target_rpms: MotorData;
-  output_currents: MotorData;
-  p_terms: MotorData;
-  i_terms: MotorData;
-  d_terms: MotorData;
-  pid_gains?: PIDGains;
+  pid_data?: {
+    motor: MotorKey;
+    target_rpm: number;
+    output_current: number;
+    p: number;
+    i: number;
+    d: number;
+    gains?: PIDGains;
+  };
 }
 
 export interface PIDGainConfig {

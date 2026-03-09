@@ -37,7 +37,12 @@ export default function OpButton({
     if (!characteristic) return;
 
     sendJsonData(
-      { type: 'hand_control', target: `${target}_${hid}`, control_type, action },
+      {
+        type: 'hand_control',
+        target: `${target}_${hid}`,
+        control_type,
+        action,
+      },
       characteristic,
     );
   }

@@ -34,7 +34,9 @@ export function useAutoNav(
   const [robotAngle, setRobotAngle] = useState(0);
   const [isAlertFlashing, setIsAlertFlashing] = useState(false);
   const [failedSeqIndex, setFailedSeqIndex] = useState<number | null>(null);
-  const [relocatingCountdown, setRelocatingCountdown] = useState<number | null>(null);
+  const [relocatingCountdown, setRelocatingCountdown] = useState<number | null>(
+    null,
+  );
 
   const addLog = useCallback((text: string) => {
     const entry: LogEntry = { time: formatTime(new Date()), text };
@@ -80,7 +82,9 @@ export function useAutoNav(
         if (seqIndex !== undefined && seqTotal !== undefined) {
           setProgress(`${seqIndex + 1} / ${seqTotal}`);
         }
-        addLog(`navigating → ${waypoint ?? '?'}${seqTotal !== undefined ? ` (${seqIndex! + 1}/${seqTotal})` : ''}`);
+        addLog(
+          `navigating → ${waypoint ?? '?'}${seqTotal !== undefined ? ` (${seqIndex! + 1}/${seqTotal})` : ''}`,
+        );
       } else if (status === 'arrived') {
         setNavStatus('ARRIVED');
         setCurrentWaypoint(waypoint);
@@ -165,7 +169,9 @@ export function useAutoNav(
       clearAlertState();
       setNavStatus('NAVIGATING');
       setProgress(null);
-      addLog(fromIndex === 0 ? 'start_auto' : `start_auto from index ${fromIndex}`);
+      addLog(
+        fromIndex === 0 ? 'start_auto' : `start_auto from index ${fromIndex}`,
+      );
       sendJson({ type: 'start_auto', from_index: fromIndex });
     },
     [sendJson, addLog, clearAlertState],

@@ -8,7 +8,11 @@ interface CourtSelectorProps {
   disabled?: boolean;
 }
 
-export function CourtSelector({ court, onSelect, disabled }: CourtSelectorProps) {
+export function CourtSelector({
+  court,
+  onSelect,
+  disabled,
+}: CourtSelectorProps) {
   return (
     <section className="mb-4 rounded-lg border p-4">
       <h2 className="mb-3 font-bold text-sm text-muted-foreground">コート</h2>

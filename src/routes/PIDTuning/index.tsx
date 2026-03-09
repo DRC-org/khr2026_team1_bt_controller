@@ -59,6 +59,26 @@ export default function PIDTuning() {
     [bluetoothTxCharacteristic],
   );
 
+  useEffect(() => {
+    if (!bluetoothTxCharacteristic) return;
+
+    sendJsonData(
+      {
+        type: 'set_telemetry',
+        enable_pid: true,
+        target_motor: selectedMotor,
+      },
+      bluetoothTxCharacteristic,
+    );
+
+    return () => {
+      sendJsonData(
+        { type: 'set_telemetry', enable_pid: false },
+        bluetoothTxCharacteristic,
+      );
+    };
+  }, [selectedMotor, bluetoothTxCharacteristic]);
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex items-center gap-4">

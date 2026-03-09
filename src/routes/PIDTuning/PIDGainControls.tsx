@@ -25,16 +25,13 @@ export function PIDGainControls({
   //   }
   // }, [currentGains]);
 
-  const handleGainChange = useCallback(
-    (key: keyof PIDGains, value: number) => {
-      const config = PID_GAIN_CONFIGS.find((c) => c.key === key);
-      if (!config) return;
+  const handleGainChange = useCallback((key: keyof PIDGains, value: number) => {
+    const config = PID_GAIN_CONFIGS.find((c) => c.key === key);
+    if (!config) return;
 
-      const clampedValue = Math.max(config.min, Math.min(config.max, value));
-      setLocalGains((prev) => ({ ...prev, [key]: clampedValue }));
-    },
-    [],
-  );
+    const clampedValue = Math.max(config.min, Math.min(config.max, value));
+    setLocalGains((prev) => ({ ...prev, [key]: clampedValue }));
+  }, []);
 
   const handleApply = useCallback(() => {
     onGainsChange(localGains);
@@ -67,7 +64,10 @@ export function PIDGainControls({
               step={config.step}
               value={localGains[config.key]}
               onChange={(e) =>
-                handleGainChange(config.key, Number.parseFloat(e.target.value) || 0)
+                handleGainChange(
+                  config.key,
+                  Number.parseFloat(e.target.value) || 0,
+                )
               }
               disabled={disabled}
               className="h-9 rounded-md border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
