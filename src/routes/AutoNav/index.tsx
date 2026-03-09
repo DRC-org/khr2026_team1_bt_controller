@@ -29,8 +29,9 @@ const WAYPOINTS = [
   'ring_pickup_2',
   'yagura_release_3',
   'honmaru',
-  'home',
 ];
+
+const ALL_WAYPOINTS = [...WAYPOINTS, 'home'];
 
 const STATUS_STYLES: Record<string, string> = {
   MANUAL: 'bg-gray-200 text-gray-700',
@@ -385,7 +386,7 @@ export default function AutoNav() {
             ウェイポイント（単発）
           </h2>
           <div className="flex flex-wrap gap-2">
-            {WAYPOINTS.map((wp) => (
+            {ALL_WAYPOINTS.map((wp) => (
               <Button
                 key={wp}
                 variant={currentWaypoint === wp ? 'default' : 'outline'}
