@@ -29,6 +29,7 @@ const WAYPOINTS = [
   'ring_pickup_2',
   'yagura_release_3',
   'honmaru',
+  'home',
 ];
 
 const STATUS_STYLES: Record<string, string> = {
