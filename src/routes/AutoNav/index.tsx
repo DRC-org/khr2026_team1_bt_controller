@@ -17,15 +17,18 @@ import { Button } from '@/components/ui/button';
 import { useBluetoothConnect } from '@/hooks/useBluetoothConnect';
 import { useWebSocketConnect } from '@/hooks/useWebSocketConnect';
 import { sendJsonData } from '@/logics/bluetooth';
-import { CourtSelector } from './CourtSelector';
+import { CourtSelector } from '@/routes/AutoNav/CourtSelector';
 import { useAutoNav } from './useAutoNav';
 
 const WAYPOINTS = [
-  'waypoint_1',
-  'waypoint_2',
-  'waypoint_3',
-  'waypoint_4',
-  'waypoint_5',
+  'yagura_pickup_1',
+  'ring_pickup_1',
+  'yagura_release_1',
+  'yagura_release_2',
+  'yagura_pickup_2',
+  'ring_pickup_2',
+  'yagura_release_3',
+  'honmaru',
 ];
 
 const STATUS_STYLES: Record<string, string> = {
