@@ -162,6 +162,7 @@ export function usePIDCharts(
       const now = Date.now();
       const motor = data.pid_data.motor;
       const { target_rpm, output_current, p, i, d } = data.pid_data;
+      const { m3508_rpms } = data;
 
       // Data push only - no chart.update(), no trimming
       // Streaming plugin renders at frameRate and auto-trims via ttl
@@ -209,10 +210,10 @@ export function usePIDCharts(
       };
       console.log(
         `[PID DEBUG] ${dbg.msgCount} msgs in 3s (${stats.msgRate}/s) | ` +
-          `processMsg: avg=${stats.avgProcessTime}ms, max=${stats.maxProcessTime}ms | ` +
-          `maxInterval: ${stats.maxInterval}ms | ` +
-          `datasetSize: ${datasetSize} | ` +
-          `parseErrors: ${dbg.parseErrors}`,
+        `processMsg: avg=${stats.avgProcessTime}ms, max=${stats.maxProcessTime}ms | ` +
+        `maxInterval: ${stats.maxInterval}ms | ` +
+        `datasetSize: ${datasetSize} | ` +
+        `parseErrors: ${dbg.parseErrors}`,
       );
       setDebugStats(stats);
       dbg.msgCount = 0;
