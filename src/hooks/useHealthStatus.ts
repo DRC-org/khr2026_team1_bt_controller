@@ -7,6 +7,8 @@ export interface HealthStatus {
   ble: boolean;
   servoFront: boolean;
   servoRear: boolean;
+  dcLiftFront: boolean;
+  dcLiftRear: boolean;
   hcRunning: boolean;
   hcElapsed: number;
   hcResult: 'ok' | 'fail' | 'timeout' | null;
@@ -18,6 +20,8 @@ const INITIAL_STATUS: HealthStatus = {
   ble: false,
   servoFront: false,
   servoRear: false,
+  dcLiftFront: false,
+  dcLiftRear: false,
   hcRunning: false,
   hcElapsed: 0,
   hcResult: null,
@@ -40,6 +44,8 @@ export function useHealthStatus(): HealthStatus {
           ble: isDeviceConnected,
           servoFront: !!h.servo_front,
           servoRear: !!h.servo_rear,
+          dcLiftFront: !!h.dc_lift_front,
+          dcLiftRear: !!h.dc_lift_rear,
           hcRunning: !!h.hc_running,
           hcElapsed: h.hc_elapsed ?? 0,
           hcResult: h.hc_result ?? null,
