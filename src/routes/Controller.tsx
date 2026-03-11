@@ -41,6 +41,8 @@ export default function Controller() {
   const [robotPosX, setRobotPosX] = useState(388);
   const [robotPosY, setRobotPosY] = useState(388);
   const [robotAngle, setRobotAngle] = useState(0);
+  const [vgoalLed, setVgoalLed] = useState(false);
+  const [errorLed, setErrorLed] = useState(false);
 
   const {
     bluetoothDevice,
@@ -208,6 +210,40 @@ export default function Controller() {
           onClick={() => handleCourtSelect('red')}
         >
           赤
+        </Button>
+        <Button
+          size="sm"
+          variant={vgoalLed ? 'default' : 'outline'}
+          className={vgoalLed ? 'bg-green-600 hover:bg-green-700' : ''}
+          onClick={() => {
+            const next = !vgoalLed;
+            setVgoalLed(next);
+            if (bluetoothTxCharacteristic) {
+              sendJsonData(
+                { type: 'hand_control', target: 'vgoal_led', control_type: 'state', action: next ? 'on' : 'off' },
+                bluetoothTxCharacteristic,
+              );
+            }
+          }}
+        >
+          VGoal
+        </Button>
+        <Button
+          size="sm"
+          variant={errorLed ? 'default' : 'outline'}
+          className={errorLed ? 'bg-red-600 hover:bg-red-700' : ''}
+          onClick={() => {
+            const next = !errorLed;
+            setErrorLed(next);
+            if (bluetoothTxCharacteristic) {
+              sendJsonData(
+                { type: 'hand_control', target: 'error_led', control_type: 'state', action: next ? 'on' : 'off' },
+                bluetoothTxCharacteristic,
+              );
+            }
+          }}
+        >
+          Error
         </Button>
       </div>
 
