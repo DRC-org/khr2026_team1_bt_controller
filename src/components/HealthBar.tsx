@@ -52,6 +52,8 @@ export function HealthBar() {
     <div className="flex items-center gap-3 border-gray-200 border-b bg-gray-50 px-3 py-1.5">
       <StatusDot label="CWMC" active={health.cwmc} />
       <StatusDot label="HWMC" active={health.hwmc} />
+      <StatusDot label="SV-F" active={health.servoFront} />
+      <StatusDot label="SV-R" active={health.servoRear} />
       <StatusDot label="BLE" active={health.ble} />
 
       <div className="ml-auto flex items-center gap-2">
