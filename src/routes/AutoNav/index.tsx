@@ -169,7 +169,7 @@ export default function AutoNav() {
             className="translate-1/2 absolute size-[6svh]"
             style={{
               bottom: `calc(${robotPosY} / 7000 * 80svh)`,
-              right: `calc(${robotPosX} / 3500 * 40svh)`,
+              right: `calc((${robotPosX} + 3481) / 6962 * 40svh)`,
               transform: `rotate(${robotAngle}deg)`,
             }}
           />
