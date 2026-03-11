@@ -1,22 +1,24 @@
 import {
-  type ReactNode,
   createContext,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
 } from 'react';
+import { HealthBar } from '@/components/HealthBar';
+import { ReconnectBanner } from '@/components/ReconnectBanner';
 import {
   fetchCharacteristics,
   resetWriteQueue,
   searchDevice as searchBtDevice,
   sendJsonData,
 } from '@/logics/bluetooth';
-import { ReconnectBanner } from '@/components/ReconnectBanner';
 
 type Court = 'blue' | 'red';
 type MessageCallback = (message: string) => void;
+type UnsubscribeFn = () => void;
 
 interface AppContextValue {
   bluetoothDevice: BluetoothDevice | undefined;
@@ -26,7 +28,9 @@ interface AppContextValue {
   bluetoothRxCharacteristic: BluetoothRemoteGATTCharacteristic | undefined;
   canReconnect: boolean;
   court: Court;
+  /** @deprecated 単一コールバック。新規コードは addMessageListener を使うこと */
   onMessage: (callback: MessageCallback) => void;
+  addMessageListener: (callback: MessageCallback) => UnsubscribeFn;
   searchDevice: () => Promise<void>;
   reconnect: () => Promise<void>;
   disconnect: () => void;
@@ -88,6 +92,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deviceRef = useRef<BluetoothDevice | undefined>(undefined);
   const messageCallbackRef = useRef<MessageCallback | null>(null);
+  const messageListenersRef = useRef<Set<MessageCallback>>(new Set());
   const courtRef = useRef(court);
   const watchdogTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoReconnectAbortRef = useRef(false);
@@ -100,6 +105,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const onMessage = useCallback((callback: MessageCallback) => {
     messageCallbackRef.current = callback;
   }, []);
+
+  const addMessageListener = useCallback(
+    (callback: MessageCallback): UnsubscribeFn => {
+      messageListenersRef.current.add(callback);
+      return () => {
+        messageListenersRef.current.delete(callback);
+      };
+    },
+    [],
+  );
 
   const setCourt = useCallback((c: Court) => {
     setCourtState(c);
@@ -146,65 +161,64 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (rxChar) {
         let rxBuffer = '';
 
-        rxChar.addEventListener(
-          'characteristicvaluechanged',
-          (event) => {
-            resetWatchdog();
+        rxChar.addEventListener('characteristicvaluechanged', (event) => {
+          resetWatchdog();
 
-            const now = performance.now();
-            const value = (event.target as BluetoothRemoteGATTCharacteristic)
-              .value;
-            const byteLen = value?.byteLength ?? 0;
+          const now = performance.now();
+          const value = (event.target as BluetoothRemoteGATTCharacteristic)
+            .value;
+          const byteLen = value?.byteLength ?? 0;
 
-            if (bleDebug.lastEventTime > 0) {
-              const interval = now - bleDebug.lastEventTime;
-              if (interval > bleDebug.maxEventInterval)
-                bleDebug.maxEventInterval = interval;
-            }
-            bleDebug.lastEventTime = now;
-            bleDebug.eventCount++;
-            bleDebug.totalBytes += byteLen;
+          if (bleDebug.lastEventTime > 0) {
+            const interval = now - bleDebug.lastEventTime;
+            if (interval > bleDebug.maxEventInterval)
+              bleDebug.maxEventInterval = interval;
+          }
+          bleDebug.lastEventTime = now;
+          bleDebug.eventCount++;
+          bleDebug.totalBytes += byteLen;
 
-            if (now - bleDebug.lastLogTime > 3000) {
-              console.log(
-                `[BLE DEBUG] ${bleDebug.eventCount} events in 3s (${(bleDebug.eventCount / 3).toFixed(1)}/s) | ` +
-                  `maxInterval: ${bleDebug.maxEventInterval.toFixed(0)}ms | ` +
-                  `avgSize: ${bleDebug.eventCount > 0 ? (bleDebug.totalBytes / bleDebug.eventCount).toFixed(0) : 0}B`,
-              );
-              bleDebug.eventCount = 0;
-              bleDebug.maxEventInterval = 0;
-              bleDebug.totalBytes = 0;
-              bleDebug.lastLogTime = now;
-            }
+          if (now - bleDebug.lastLogTime > 3000) {
+            console.log(
+              `[BLE DEBUG] ${bleDebug.eventCount} events in 3s (${(bleDebug.eventCount / 3).toFixed(1)}/s) | ` +
+                `maxInterval: ${bleDebug.maxEventInterval.toFixed(0)}ms | ` +
+                `avgSize: ${bleDebug.eventCount > 0 ? (bleDebug.totalBytes / bleDebug.eventCount).toFixed(0) : 0}B`,
+            );
+            bleDebug.eventCount = 0;
+            bleDebug.maxEventInterval = 0;
+            bleDebug.totalBytes = 0;
+            bleDebug.lastLogTime = now;
+          }
 
-            rxBuffer += new TextDecoder('utf-8').decode(value);
+          rxBuffer += new TextDecoder('utf-8').decode(value);
 
-            let depth = 0;
-            let objectStart = -1;
-            let consumed = 0;
-            for (let i = 0; i < rxBuffer.length; i++) {
-              const ch = rxBuffer[i];
-              if (ch === '{') {
-                if (depth === 0) objectStart = i;
-                depth++;
-              } else if (ch === '}') {
-                depth--;
-                if (depth === 0 && objectStart >= 0) {
-                  messageCallbackRef.current?.(
-                    rxBuffer.slice(objectStart, i + 1),
-                  );
-                  consumed = i + 1;
-                  objectStart = -1;
+          let depth = 0;
+          let objectStart = -1;
+          let consumed = 0;
+          for (let i = 0; i < rxBuffer.length; i++) {
+            const ch = rxBuffer[i];
+            if (ch === '{') {
+              if (depth === 0) objectStart = i;
+              depth++;
+            } else if (ch === '}') {
+              depth--;
+              if (depth === 0 && objectStart >= 0) {
+                const jsonStr = rxBuffer.slice(objectStart, i + 1);
+                messageCallbackRef.current?.(jsonStr);
+                for (const listener of messageListenersRef.current) {
+                  listener(jsonStr);
                 }
+                consumed = i + 1;
+                objectStart = -1;
               }
             }
-            rxBuffer = rxBuffer.slice(consumed);
+          }
+          rxBuffer = rxBuffer.slice(consumed);
 
-            if (rxBuffer.length > 8192) {
-              rxBuffer = '';
-            }
-          },
-        );
+          if (rxBuffer.length > 8192) {
+            rxBuffer = '';
+          }
+        });
         await rxChar.startNotifications();
         resetWatchdog();
       }
@@ -212,10 +226,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setIsDeviceConnected(true);
 
       if (txChar) {
-        sendJsonData(
-          { type: 'set_court', court: courtRef.current },
-          txChar,
-        );
+        sendJsonData({ type: 'set_court', court: courtRef.current }, txChar);
       }
     },
     [resetWatchdog],
@@ -246,7 +257,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setIsReconnecting(false);
           return;
         } catch (e) {
-          console.warn(`[BLE] Auto-reconnect attempt ${attempt + 1} failed:`, e);
+          console.warn(
+            `[BLE] Auto-reconnect attempt ${attempt + 1} failed:`,
+            e,
+          );
         }
       }
 
@@ -358,6 +372,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     canReconnect,
     court,
     onMessage,
+    addMessageListener,
     searchDevice,
     reconnect,
     disconnect,
@@ -366,6 +381,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider value={value}>
+      <HealthBar />
       <ReconnectBanner />
       {children}
     </AppContext.Provider>

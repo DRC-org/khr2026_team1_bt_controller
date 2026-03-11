@@ -15,7 +15,7 @@ export function CourtSelector({
 }: CourtSelectorProps) {
   return (
     <section className="mb-4 rounded-lg border p-4">
-      <h2 className="mb-3 font-bold text-sm text-muted-foreground">コート</h2>
+      <h2 className="mb-3 font-bold text-muted-foreground text-sm">コート</h2>
       <div className="flex gap-2">
         <Button
           variant={court === 'blue' ? 'default' : 'outline'}

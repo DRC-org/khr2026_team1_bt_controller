@@ -83,7 +83,7 @@ export function useAutoNav(
           setProgress(`${seqIndex + 1} / ${seqTotal}`);
         }
         addLog(
-          `navigating → ${waypoint ?? '?'}${seqTotal !== undefined ? ` (${seqIndex! + 1}/${seqTotal})` : ''}`,
+          `navigating → ${waypoint ?? '?'}${seqTotal !== undefined ? ` (${(seqIndex ?? 0) + 1}/${seqTotal})` : ''}`,
         );
       } else if (status === 'arrived') {
         setNavStatus('ARRIVED');

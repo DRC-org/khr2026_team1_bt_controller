@@ -38,10 +38,12 @@ export function PIDGainControls({
   }, [localGains, onGainsChange]);
 
   const handleReset = useCallback(() => {
+    const find = (key: string) =>
+      PID_GAIN_CONFIGS.find((c) => c.key === key)?.default ?? 0;
     const defaults: PIDGains = {
-      kp: PID_GAIN_CONFIGS.find((c) => c.key === 'kp')!.default,
-      ki: PID_GAIN_CONFIGS.find((c) => c.key === 'ki')!.default,
-      kd: PID_GAIN_CONFIGS.find((c) => c.key === 'kd')!.default,
+      kp: find('kp'),
+      ki: find('ki'),
+      kd: find('kd'),
     };
     setLocalGains(defaults);
     onGainsChange(defaults);
@@ -54,10 +56,14 @@ export function PIDGainControls({
       <div className="grid grid-cols-3 gap-4">
         {PID_GAIN_CONFIGS.map((config) => (
           <div key={config.key} className="flex flex-col gap-2">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label
+              htmlFor={`pid-${config.key}`}
+              className="font-medium text-muted-foreground text-xs"
+            >
               {config.label}
             </label>
             <input
+              id={`pid-${config.key}`}
               type="number"
               min={config.min}
               max={config.max}
@@ -103,7 +109,7 @@ export function PIDGainControls({
       </div>
 
       {currentGains && (
-        <div className="text-xs text-muted-foreground">
+        <div className="text-muted-foreground text-xs">
           Current (ESP32): Kp={currentGains.kp.toFixed(2)}, Ki=
           {currentGains.ki.toFixed(3)}, Kd={currentGains.kd.toFixed(3)}
         </div>

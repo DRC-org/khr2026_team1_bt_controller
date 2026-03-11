@@ -210,10 +210,10 @@ export function usePIDCharts(
       };
       console.log(
         `[PID DEBUG] ${dbg.msgCount} msgs in 3s (${stats.msgRate}/s) | ` +
-        `processMsg: avg=${stats.avgProcessTime}ms, max=${stats.maxProcessTime}ms | ` +
-        `maxInterval: ${stats.maxInterval}ms | ` +
-        `datasetSize: ${datasetSize} | ` +
-        `parseErrors: ${dbg.parseErrors}`,
+          `processMsg: avg=${stats.avgProcessTime}ms, max=${stats.maxProcessTime}ms | ` +
+          `maxInterval: ${stats.maxInterval}ms | ` +
+          `datasetSize: ${datasetSize} | ` +
+          `parseErrors: ${dbg.parseErrors}`,
       );
       setDebugStats(stats);
       dbg.msgCount = 0;
