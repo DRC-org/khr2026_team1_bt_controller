@@ -23,10 +23,10 @@ export function useAutoNav(
   onMessage: (callback: (message: string) => void) => void,
   isConnected: boolean,
   sendJson: (data: unknown) => void,
+  setCourt: (c: Court) => void,
 ) {
   const [navStatus, setNavStatus] = useState<NavStatus>('MANUAL');
   const [currentWaypoint, setCurrentWaypoint] = useState<string | null>(null);
-  const [court, setCourt] = useState<Court>('blue');
   const [progress, setProgress] = useState<string | null>(null);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [robotPosX, setRobotPosX] = useState(0);
@@ -161,7 +161,7 @@ export function useAutoNav(
       addLog(`court → ${c}`);
       sendJson({ type: 'set_court', court: c });
     },
-    [sendJson, addLog],
+    [sendJson, addLog, setCourt],
   );
 
   const sendStartAutoFrom = useCallback(
@@ -188,7 +188,6 @@ export function useAutoNav(
   return {
     navStatus,
     currentWaypoint,
-    court,
     progress,
     log,
     robotPosX,

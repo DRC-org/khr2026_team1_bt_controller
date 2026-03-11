@@ -10,11 +10,11 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
 import { Button } from '@/components/ui/button';
-import { useBluetoothConnect } from '@/hooks/useBluetoothConnect';
+import { useAppContext } from '@/contexts/AppContext';
 import { useWebSocketConnect } from '@/hooks/useWebSocketConnect';
 import { sendJsonData } from '@/logics/bluetooth';
 import { CourtSelector } from '@/routes/AutoNav/CourtSelector';
@@ -66,7 +66,7 @@ export default function AutoNav() {
     `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`,
   );
 
-  const bt = useBluetoothConnect();
+  const bt = useAppContext();
   const ws = useWebSocketConnect();
 
   // BLE 用の sendJson アダプター
@@ -83,7 +83,6 @@ export default function AutoNav() {
   const {
     navStatus,
     currentWaypoint,
-    court,
     progress,
     log,
     robotPosX,
@@ -97,7 +96,17 @@ export default function AutoNav() {
     sendSetCourt,
     sendStartAutoFrom,
     sendStopAuto,
-  } = useAutoNav(onMessage, isConnected, sendJson);
+  } = useAutoNav(onMessage, isConnected, sendJson, bt.setCourt);
+
+  // ページ表示時に auto モードへ切り替え
+  const sentAutoRef = useRef(false);
+  useEffect(() => {
+    if (isConnected && !sentAutoRef.current) {
+      sendNavMode('auto');
+      sentAutoRef.current = true;
+    }
+    if (!isConnected) sentAutoRef.current = false;
+  }, [isConnected, sendNavMode]);
 
   // エラー時の赤白交互点滅（500ms 間隔）
   useEffect(() => {
@@ -252,7 +261,7 @@ export default function AutoNav() {
 
         {/* Court selector */}
         <CourtSelector
-          court={court}
+          court={bt.court}
           onSelect={sendSetCourt}
           disabled={!isConnected}
         />

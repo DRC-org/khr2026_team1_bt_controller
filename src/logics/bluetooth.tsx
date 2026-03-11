@@ -12,12 +12,16 @@ const RX_CHARACTERISTIC_UUID = '3ecd3272-0f80-4518-ad58-78aa9af3ec9d';
 let writeQueue: Promise<void> = Promise.resolve();
 let writeQueueSize = 0;
 
+export function resetWriteQueue(): void {
+  writeQueue = Promise.resolve();
+  writeQueueSize = 0;
+}
+
 export function sendJsonData(
   // biome-ignore lint/complexity/noBannedTypes: Temporary object type
   data: Object,
   txCharacteristic: BluetoothRemoteGATTCharacteristic,
 ): void {
-  // Drop high-frequency joystick updates if the queue is growing
   if (
     typeof data === 'object' &&
     data !== null &&
@@ -35,9 +39,7 @@ export function sendJsonData(
       const txBuf = encoder.encode(JSON.stringify(data));
       return txCharacteristic.writeValueWithoutResponse(txBuf);
     })
-    .catch(() => {
-      // 切断・失敗時もキューを詰まらせない
-    })
+    .catch(() => {})
     .finally(() => {
       writeQueueSize--;
     });
@@ -50,12 +52,11 @@ export async function searchDevice() {
   });
 }
 
-export async function fetchTxCharacteristic(server: BluetoothRemoteGATTServer) {
-  const service = await server?.getPrimaryService(SERVICE_UUID);
-  return await service?.getCharacteristic(TX_CHARACTERISTIC_UUID);
-}
-
-export async function fetchRxCharacteristic(server: BluetoothRemoteGATTServer) {
-  const service = await server?.getPrimaryService(SERVICE_UUID);
-  return await service?.getCharacteristic(RX_CHARACTERISTIC_UUID);
+export async function fetchCharacteristics(server: BluetoothRemoteGATTServer) {
+  const service = await server.getPrimaryService(SERVICE_UUID);
+  const [txChar, rxChar] = await Promise.all([
+    service.getCharacteristic(TX_CHARACTERISTIC_UUID),
+    service.getCharacteristic(RX_CHARACTERISTIC_UUID),
+  ]);
+  return { txChar, rxChar };
 }

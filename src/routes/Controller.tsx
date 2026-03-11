@@ -17,16 +17,30 @@ import KumaSvg from '@/assets/kuma.svg';
 import OpButton from '@/components/OpButton';
 // import JoystickFields from '@/components/JoystickFields';
 import { Button } from '@/components/ui/button';
-import { useBluetoothConnect } from '@/hooks/useBluetoothConnect';
+import { useAppContext } from '@/contexts/AppContext';
 import { useDisableContextMenu } from '@/hooks/useDisableContextMenu';
 import { useJoystickFields } from '@/hooks/useJoystickFields';
 import { sendJsonData } from '@/logics/bluetooth';
+
+function useSendNavModeOnMount(
+  isConnected: boolean,
+  characteristic: BluetoothRemoteGATTCharacteristic | undefined,
+  mode: 'manual' | 'auto',
+) {
+  const sentRef = useRef(false);
+  useEffect(() => {
+    if (isConnected && characteristic && !sentRef.current) {
+      sendJsonData({ type: 'nav_mode', mode }, characteristic);
+      sentRef.current = true;
+    }
+    if (!isConnected) sentRef.current = false;
+  }, [isConnected, characteristic, mode]);
+}
 
 export default function Controller() {
   const [robotPosX, setRobotPosX] = useState(388);
   const [robotPosY, setRobotPosY] = useState(388);
   const [robotAngle, setRobotAngle] = useState(0);
-  const [court, setCourt] = useState<'blue' | 'red'>('blue');
 
   const {
     bluetoothDevice,
@@ -35,7 +49,9 @@ export default function Controller() {
     onMessage,
     searchDevice,
     disconnect,
-  } = useBluetoothConnect();
+    court,
+    setCourt,
+  } = useAppContext();
 
   const btCharRef = useRef(bluetoothTxCharacteristic);
   useEffect(() => {
@@ -68,6 +84,7 @@ export default function Controller() {
     sendJsonData(txData, bluetoothTxCharacteristic);
   });
 
+  useSendNavModeOnMount(isDeviceConnected, bluetoothTxCharacteristic, 'manual');
   useDisableContextMenu();
 
   useEffect(() => {

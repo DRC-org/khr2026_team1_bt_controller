@@ -8,7 +8,7 @@ import { BluetoothConnected, BluetoothOff } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Button } from '@/components/ui/button';
-import { useBluetoothConnect } from '@/hooks/useBluetoothConnect';
+import { useAppContext } from '@/contexts/AppContext';
 import { sendJsonData } from '@/logics/bluetooth';
 import { MotorSelector } from './MotorSelector';
 import { PIDGainControls } from './PIDGainControls';
@@ -29,7 +29,7 @@ export default function PIDTuning() {
     onMessage,
     searchDevice,
     disconnect,
-  } = useBluetoothConnect();
+  } = useAppContext();
 
   const { chartRefs, chartData, chartOptions, clearAllCharts, debugStats } =
     usePIDCharts(onMessage, isDeviceConnected, selectedMotor, setCurrentGains);
