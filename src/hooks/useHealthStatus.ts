@@ -9,6 +9,7 @@ export interface HealthStatus {
   servoRear: boolean;
   dcLiftFront: boolean;
   dcLiftRear: boolean;
+  crab: boolean;
   hcRunning: boolean;
   hcElapsed: number;
   hcResult: 'ok' | 'fail' | 'timeout' | null;
@@ -22,6 +23,7 @@ const INITIAL_STATUS: HealthStatus = {
   servoRear: false,
   dcLiftFront: false,
   dcLiftRear: false,
+  crab: false,
   hcRunning: false,
   hcElapsed: 0,
   hcResult: null,
@@ -46,6 +48,7 @@ export function useHealthStatus(): HealthStatus {
           servoRear: !!h.servo_rear,
           dcLiftFront: !!h.dc_lift_front,
           dcLiftRear: !!h.dc_lift_rear,
+          crab: !!h.crab,
           hcRunning: !!h.hc_running,
           hcElapsed: h.hc_elapsed ?? 0,
           hcResult: h.hc_result ?? null,

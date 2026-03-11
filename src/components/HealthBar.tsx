@@ -56,6 +56,7 @@ export function HealthBar() {
       <StatusDot label="SV-R" active={health.servoRear} />
       <StatusDot label="DC-F" active={health.dcLiftFront} />
       <StatusDot label="DC-R" active={health.dcLiftRear} />
+      <StatusDot label="CRAB" active={health.crab} />
       <StatusDot label="BLE" active={health.ble} />
 
       <div className="ml-auto flex items-center gap-2">
