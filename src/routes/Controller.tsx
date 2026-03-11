@@ -4,6 +4,7 @@ import {
   ArrowUp,
   BluetoothConnected,
   BluetoothOff,
+  ChevronLeft,
   Dice1,
   Dice2,
   Dice3,
@@ -153,7 +154,7 @@ export default function Controller() {
   }, [isDeviceConnected, onMessage, handleMessage]);
 
   return (
-    <div className="h-svh touch-none select-none">
+    <div className="h-[calc(100svh-2.5rem)] select-none">
       {/* <JoystickFields
         label="left"
         x={joystickLFields.x.toString()}
@@ -173,7 +174,13 @@ export default function Controller() {
         angle={joystickRFields.angle.toString()}
       /> */}
 
-      <div className="relative z-10 flex items-center gap-2 p-3">
+      <div className="relative z-20 flex items-center gap-2 p-3">
+        <Button variant="ghost" size="icon-sm" asChild>
+          <a href="#/">
+            <ChevronLeft />
+          </a>
+        </Button>
+
         <Button
           variant="secondary"
           className="font-normal"
@@ -220,7 +227,12 @@ export default function Controller() {
             setVgoalLed(next);
             if (bluetoothTxCharacteristic) {
               sendJsonData(
-                { type: 'hand_control', target: 'vgoal_led', control_type: 'state', action: next ? 'on' : 'off' },
+                {
+                  type: 'hand_control',
+                  target: 'vgoal_led',
+                  control_type: 'state',
+                  action: next ? 'on' : 'off',
+                },
                 bluetoothTxCharacteristic,
               );
             }
@@ -237,7 +249,12 @@ export default function Controller() {
             setErrorLed(next);
             if (bluetoothTxCharacteristic) {
               sendJsonData(
-                { type: 'hand_control', target: 'error_led', control_type: 'state', action: next ? 'on' : 'off' },
+                {
+                  type: 'hand_control',
+                  target: 'error_led',
+                  control_type: 'state',
+                  action: next ? 'on' : 'off',
+                },
                 bluetoothTxCharacteristic,
               );
             }
@@ -573,7 +590,7 @@ export default function Controller() {
 
       <div
         id="joystick-l-field"
-        className="absolute top-0 left-0 h-svh w-1/2 cursor-grab"
+        className="absolute bottom-0 left-0 top-12 w-1/2 cursor-grab touch-none"
       >
         <div className="absolute inset-x-0 bottom-4 text-center text-primary">
           Move
@@ -582,7 +599,7 @@ export default function Controller() {
       <div className="absolute top-0 left-1/2 -z-10 h-svh w-0 border-primary border-r border-dashed" />
       <div
         id="joystick-r-field"
-        className="absolute top-0 right-0 h-svh w-1/2 cursor-grab"
+        className="absolute top-12 right-0 bottom-0 w-1/2 cursor-grab touch-none"
       >
         <div className="absolute inset-x-0 bottom-4 text-center text-primary">
           Turn

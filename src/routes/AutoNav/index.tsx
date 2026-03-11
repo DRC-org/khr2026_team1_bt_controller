@@ -145,7 +145,7 @@ export default function AutoNav() {
   }
 
   return (
-    <div className="flex h-svh overflow-hidden">
+    <div className="flex h-[calc(100svh-2.5rem)] overflow-hidden">
       {/* 赤白交互点滅オーバーレイ（エラー発生時） */}
       {isAlertFlashing && (
         <div
