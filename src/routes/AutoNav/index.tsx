@@ -62,8 +62,7 @@ export default function AutoNav() {
   }
 
   const [wsUrl, setWsUrl] = useState(
-    // HTTPS 環境では Vite proxy 経由の wss:// を使用（Mixed Content 回避）
-    `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`,
+    `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://192.168.1.101:8080/ws`,
   );
 
   const bt = useAppContext();
