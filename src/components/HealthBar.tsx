@@ -28,13 +28,20 @@ function StatusDot({
 }
 
 export function HealthBar() {
-  const { bluetoothTxCharacteristic } = useAppContext();
+  const { bluetoothTxCharacteristic, isWsConnected, wsSendRef } =
+    useAppContext();
   const health = useHealthStatus();
 
+  const canSend = !!bluetoothTxCharacteristic || isWsConnected;
+
   const handleHealthCheck = useCallback(() => {
-    if (!bluetoothTxCharacteristic) return;
-    sendJsonData({ type: 'health_check' }, bluetoothTxCharacteristic);
-  }, [bluetoothTxCharacteristic]);
+    const payload = { type: 'health_check' };
+    if (bluetoothTxCharacteristic) {
+      sendJsonData(payload, bluetoothTxCharacteristic);
+    } else if (wsSendRef.current) {
+      wsSendRef.current(payload);
+    }
+  }, [bluetoothTxCharacteristic, wsSendRef]);
 
   const resultLabel =
     health.hcResult === 'ok'
@@ -87,7 +94,7 @@ export function HealthBar() {
           variant="outline"
           className="h-7 gap-1 px-2 text-xs"
           onClick={handleHealthCheck}
-          disabled={health.hcRunning || !bluetoothTxCharacteristic}
+          disabled={health.hcRunning || !canSend}
         >
           <Activity className="size-3.5" />
           HC

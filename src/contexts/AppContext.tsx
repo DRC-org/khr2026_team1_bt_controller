@@ -28,9 +28,13 @@ interface AppContextValue {
   bluetoothRxCharacteristic: BluetoothRemoteGATTCharacteristic | undefined;
   canReconnect: boolean;
   court: Court;
+  isWsConnected: boolean;
+  wsSendRef: React.RefObject<((data: unknown) => void) | null>;
   /** @deprecated 単一コールバック。新規コードは addMessageListener を使うこと */
   onMessage: (callback: MessageCallback) => void;
   addMessageListener: (callback: MessageCallback) => UnsubscribeFn;
+  dispatchMessage: (msg: string) => void;
+  setWsTransport: (sendFn: ((data: unknown) => void) | null) => void;
   searchDevice: () => Promise<void>;
   reconnect: () => Promise<void>;
   disconnect: () => void;
@@ -94,6 +98,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deviceRef = useRef<BluetoothDevice | undefined>(undefined);
   const messageCallbackRef = useRef<MessageCallback | null>(null);
   const messageListenersRef = useRef<Set<MessageCallback>>(new Set());
+  const [isWsConnected, setIsWsConnected] = useState(false);
+  const wsSendRef = useRef<((data: unknown) => void) | null>(null);
+
   const courtRef = useRef(court);
   const watchdogTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoReconnectAbortRef = useRef(false);
@@ -121,6 +128,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCourtState(c);
     localStorage.setItem('drc_court', c);
   }, []);
+
+  const dispatchMessage = useCallback((msg: string) => {
+    messageCallbackRef.current?.(msg);
+    for (const listener of messageListenersRef.current) {
+      listener(msg);
+    }
+  }, []);
+
+  const setWsTransport = useCallback(
+    (sendFn: ((data: unknown) => void) | null) => {
+      wsSendRef.current = sendFn;
+      setIsWsConnected(sendFn !== null);
+    },
+    [],
+  );
 
   const canReconnect =
     !!bluetoothDevice && !isDeviceConnected && !isReconnecting;
@@ -375,8 +397,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     bluetoothRxCharacteristic,
     canReconnect,
     court,
+    isWsConnected,
+    wsSendRef,
     onMessage,
     addMessageListener,
+    dispatchMessage,
+    setWsTransport,
     searchDevice,
     reconnect,
     disconnect,

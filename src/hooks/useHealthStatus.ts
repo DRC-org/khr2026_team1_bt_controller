@@ -30,8 +30,10 @@ const INITIAL_STATUS: HealthStatus = {
 };
 
 export function useHealthStatus(): HealthStatus {
-  const { isDeviceConnected, addMessageListener } = useAppContext();
+  const { isDeviceConnected, isWsConnected, addMessageListener } =
+    useAppContext();
   const [status, setStatus] = useState<HealthStatus>(INITIAL_STATUS);
+  const isAnyConnected = isDeviceConnected || isWsConnected;
 
   const handleMessage = useCallback(
     (msg: string) => {
@@ -43,7 +45,7 @@ export function useHealthStatus(): HealthStatus {
         setStatus({
           cwmc: !!h.cwmc,
           hwmc: !!h.hwmc,
-          ble: isDeviceConnected,
+          ble: isAnyConnected,
           servoFront: !!h.servo_front,
           servoRear: !!h.servo_rear,
           dcLiftFront: !!h.dc_lift_front,
@@ -57,7 +59,7 @@ export function useHealthStatus(): HealthStatus {
         // ignore parse errors
       }
     },
-    [isDeviceConnected],
+    [isAnyConnected],
   );
 
   useEffect(() => {
@@ -65,8 +67,8 @@ export function useHealthStatus(): HealthStatus {
   }, [addMessageListener, handleMessage]);
 
   useEffect(() => {
-    setStatus((prev) => ({ ...prev, ble: isDeviceConnected }));
-  }, [isDeviceConnected]);
+    setStatus((prev) => ({ ...prev, ble: isAnyConnected }));
+  }, [isAnyConnected]);
 
   return status;
 }

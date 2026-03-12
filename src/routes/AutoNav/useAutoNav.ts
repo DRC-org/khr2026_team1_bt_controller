@@ -20,7 +20,9 @@ function formatTime(date: Date): string {
 }
 
 export function useAutoNav(
-  onMessage: (callback: (message: string) => void) => void,
+  addMessageListener: (
+    callback: (message: string) => void,
+  ) => (() => void) | void,
   isConnected: boolean,
   sendJson: (data: unknown) => void,
   setCourt: (c: Court) => void,
@@ -128,9 +130,9 @@ export function useAutoNav(
 
   useEffect(() => {
     if (isConnected) {
-      onMessage(handleMessage);
+      return addMessageListener(handleMessage) ?? undefined;
     }
-  }, [isConnected, onMessage, handleMessage]);
+  }, [isConnected, addMessageListener, handleMessage]);
 
   const sendNavMode = useCallback(
     (mode: 'manual' | 'auto') => {

@@ -84,7 +84,23 @@ export default function AutoNav() {
   const sendJson = connectionMode === 'ws' ? ws.sendJson : btSendJson;
   const isConnected =
     connectionMode === 'ws' ? ws.isConnected : bt.isDeviceConnected;
-  const onMessage = connectionMode === 'ws' ? ws.onMessage : bt.onMessage;
+  const addMsgListener =
+    connectionMode === 'ws' ? ws.addMessageListener : bt.addMessageListener;
+
+  // WS 接続時: AppContext に transport を登録し、WS メッセージを dispatchMessage で配信
+  useEffect(() => {
+    if (connectionMode === 'ws' && ws.isConnected) {
+      bt.setWsTransport(ws.sendJson);
+      const unsub = ws.addMessageListener((msg) => bt.dispatchMessage(msg));
+      return () => {
+        unsub();
+        bt.setWsTransport(null);
+      };
+    }
+    if (connectionMode !== 'ws') {
+      bt.setWsTransport(null);
+    }
+  }, [connectionMode, ws.isConnected]);
 
   const {
     navStatus,
@@ -102,7 +118,7 @@ export default function AutoNav() {
     sendSetCourt,
     sendStartAutoFrom,
     sendStopAuto,
-  } = useAutoNav(onMessage, isConnected, sendJson, bt.setCourt);
+  } = useAutoNav(addMsgListener, isConnected, sendJson, bt.setCourt);
 
   // ページ表示時に auto モードへ切り替え
   const sentAutoRef = useRef(false);
@@ -211,10 +227,20 @@ export default function AutoNav() {
           </div>
 
           <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto bg-purple-600/30 text-purple-900 hover:bg-purple-600/50"
+            onClick={() => sendJson({ type: 'hand_reset' })}
+            disabled={!isConnected}
+          >
+            <RotateCcw className="size-4" />
+            Reset
+          </Button>
+
+          <Button
             variant="ghost"
             size="icon-sm"
             onClick={toggleFullscreen}
-            className="ml-auto"
           >
             {isFullscreen ? <Minimize /> : <Maximize />}
           </Button>

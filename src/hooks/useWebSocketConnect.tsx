@@ -5,21 +5,25 @@ type MessageCallback = (message: string) => void;
 export function useWebSocketConnect() {
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const messageCallbackRef = useRef<MessageCallback | null>(null);
+  const listenersRef = useRef<Set<MessageCallback>>(new Set());
 
-  const onMessage = useCallback((cb: MessageCallback) => {
-    messageCallbackRef.current = cb;
+  const addMessageListener = useCallback((cb: MessageCallback) => {
+    listenersRef.current.add(cb);
+    return () => {
+      listenersRef.current.delete(cb);
+    };
   }, []);
 
   const connect = useCallback((url: string) => {
     wsRef.current?.close();
+    listenersRef.current.clear();
     const ws = new WebSocket(url);
 
     ws.onopen = () => setIsConnected(true);
     ws.onclose = () => setIsConnected(false);
     ws.onerror = () => setIsConnected(false);
     ws.onmessage = (event) => {
-      messageCallbackRef.current?.(event.data as string);
+      for (const cb of listenersRef.current) cb(event.data as string);
     };
 
     wsRef.current = ws;
@@ -34,5 +38,5 @@ export function useWebSocketConnect() {
       wsRef.current.send(JSON.stringify(data));
   }, []);
 
-  return { isConnected, connect, disconnect, sendJson, onMessage };
+  return { isConnected, connect, disconnect, sendJson, addMessageListener };
 }
