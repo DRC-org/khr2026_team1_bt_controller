@@ -30,8 +30,10 @@ interface ChartRefs {
 }
 
 export function usePIDCharts(
-  onMessage: (callback: (message: string) => void) => void,
-  isDeviceConnected: boolean,
+  addMessageListener: (
+    callback: (message: string) => void,
+  ) => (() => void) | void,
+  isConnected: boolean,
   selectedMotor: MotorKey,
   onGainsUpdate?: (gains: PIDGains) => void,
 ) {
@@ -225,10 +227,10 @@ export function usePIDCharts(
   }, []);
 
   useEffect(() => {
-    if (isDeviceConnected) {
-      onMessage(processMessage);
+    if (isConnected) {
+      return addMessageListener(processMessage) ?? undefined;
     }
-  }, [isDeviceConnected, onMessage, processMessage]);
+  }, [isConnected, addMessageListener, processMessage]);
 
   return {
     chartRefs,

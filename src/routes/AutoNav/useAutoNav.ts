@@ -22,7 +22,7 @@ function formatTime(date: Date): string {
 export function useAutoNav(
   addMessageListener: (
     callback: (message: string) => void,
-  ) => (() => void) | void,
+  ) => (() => void) | undefined,
   isConnected: boolean,
   sendJson: (data: unknown) => void,
   setCourt: (c: Court) => void,
@@ -39,6 +39,7 @@ export function useAutoNav(
   const [relocatingCountdown, setRelocatingCountdown] = useState<number | null>(
     null,
   );
+  const [yaguraCorrection, setYaguraCorrection] = useState(false);
 
   const addLog = useCallback((text: string) => {
     const entry: LogEntry = { time: formatTime(new Date()), text };
@@ -118,6 +119,9 @@ export function useAutoNav(
         const c = data.court as Court;
         setCourt(c);
         addLog(`court → ${c}`);
+      } else if (status === 'yagura_correction') {
+        setYaguraCorrection(data.enabled as boolean);
+        addLog(`yagura correction → ${data.enabled ? 'ON' : 'OFF'}`);
       } else if (status === 'completed') {
         setNavStatus('AUTO_IDLE');
         setProgress(null);
@@ -187,6 +191,15 @@ export function useAutoNav(
     sendJson({ type: 'stop_auto' });
   }, [sendJson, addLog, clearAlertState]);
 
+  const sendSetYaguraCorrection = useCallback(
+    (enabled: boolean) => {
+      setYaguraCorrection(enabled);
+      addLog(`yagura correction → ${enabled ? 'ON' : 'OFF'}`);
+      sendJson({ type: 'set_yagura_correction', enabled });
+    },
+    [sendJson, addLog],
+  );
+
   return {
     navStatus,
     currentWaypoint,
@@ -203,5 +216,7 @@ export function useAutoNav(
     sendSetCourt,
     sendStartAutoFrom,
     sendStopAuto,
+    yaguraCorrection,
+    sendSetYaguraCorrection,
   };
 }

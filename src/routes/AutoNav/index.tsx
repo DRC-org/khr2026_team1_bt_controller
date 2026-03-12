@@ -15,8 +15,6 @@ import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
-import { useWebSocketConnect } from '@/hooks/useWebSocketConnect';
-import { sendJsonData } from '@/logics/bluetooth';
 import { CourtSelector } from '@/routes/AutoNav/CourtSelector';
 import { useAutoNav } from './useAutoNav';
 
@@ -43,10 +41,7 @@ const STATUS_STYLES: Record<string, string> = {
   RELOCATING: 'bg-purple-200 text-purple-800',
 };
 
-type ConnectionMode = 'ble' | 'ws';
-
 export default function AutoNav() {
-  const [connectionMode, setConnectionMode] = useState<ConnectionMode>('ble');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [flashVisible, setFlashVisible] = useState(false);
 
@@ -61,46 +56,21 @@ export default function AutoNav() {
     else document.documentElement.requestFullscreen();
   }
 
-  const [wsUrl, setWsUrl] = useState(
-    (() => {
-      const isGitHubPages = window.location.hostname.endsWith('.github.io');
-      if (isGitHubPages) {
-        return 'ws://192.168.1.101:8080/ws';
-      }
-      const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      return `${scheme}://${window.location.host}/ws`;
-    })(),
-  );
-
-  const bt = useAppContext();
-  const ws = useWebSocketConnect();
-
-  // BLE 用の sendJson アダプター
-  const btSendJson = (data: unknown) => {
-    if (bt.bluetoothTxCharacteristic)
-      sendJsonData(data as object, bt.bluetoothTxCharacteristic);
-  };
-
-  const sendJson = connectionMode === 'ws' ? ws.sendJson : btSendJson;
-  const isConnected =
-    connectionMode === 'ws' ? ws.isConnected : bt.isDeviceConnected;
-  const addMsgListener =
-    connectionMode === 'ws' ? ws.addMessageListener : bt.addMessageListener;
-
-  // WS 接続時: AppContext に transport を登録し、WS メッセージを dispatchMessage で配信
-  useEffect(() => {
-    if (connectionMode === 'ws' && ws.isConnected) {
-      bt.setWsTransport(ws.sendJson);
-      const unsub = ws.addMessageListener((msg) => bt.dispatchMessage(msg));
-      return () => {
-        unsub();
-        bt.setWsTransport(null);
-      };
-    }
-    if (connectionMode !== 'ws') {
-      bt.setWsTransport(null);
-    }
-  }, [connectionMode, ws.isConnected]);
+  const ctx = useAppContext();
+  const {
+    connectionMode,
+    setConnectionMode,
+    isConnected,
+    sendJson,
+    connect,
+    disconnect,
+    addMessageListener,
+    bluetoothDevice,
+    wsUrl,
+    setWsUrl,
+    court,
+    setCourt,
+  } = ctx;
 
   const {
     navStatus,
@@ -118,7 +88,9 @@ export default function AutoNav() {
     sendSetCourt,
     sendStartAutoFrom,
     sendStopAuto,
-  } = useAutoNav(addMsgListener, isConnected, sendJson, bt.setCourt);
+    yaguraCorrection,
+    sendSetYaguraCorrection,
+  } = useAutoNav(addMessageListener, isConnected, sendJson, setCourt);
 
   // ページ表示時に auto モードへ切り替え
   const sentAutoRef = useRef(false);
@@ -146,13 +118,8 @@ export default function AutoNav() {
   const isBusy = isNavigating || isRelocating;
 
   function handleConnect() {
-    if (connectionMode === 'ws') {
-      if (ws.isConnected) ws.disconnect();
-      else ws.connect(wsUrl);
-    } else {
-      if (bt.isDeviceConnected) bt.disconnect();
-      else bt.searchDevice();
-    }
+    if (isConnected) disconnect();
+    else connect();
   }
 
   function handleStartAutoFrom(index: number) {
@@ -165,6 +132,9 @@ export default function AutoNav() {
     }
     sendStartAutoFrom(index);
   }
+
+  const ConnectedIcon = connectionMode === 'ws' ? Wifi : BluetoothConnected;
+  const DisconnectedIcon = connectionMode === 'ws' ? WifiOff : BluetoothOff;
 
   return (
     <div className="flex h-[calc(100svh-2.5rem)] overflow-hidden">
@@ -265,16 +235,10 @@ export default function AutoNav() {
             className="font-normal"
             onClick={handleConnect}
           >
-            {connectionMode === 'ws' ? (
-              ws.isConnected ? (
-                <Wifi className="text-green-600" />
-              ) : (
-                <WifiOff className="size-5 text-destructive" />
-              )
-            ) : bt.isDeviceConnected ? (
-              <BluetoothConnected className="text-green-600" />
+            {isConnected ? (
+              <ConnectedIcon className="text-green-600" />
             ) : (
-              <BluetoothOff className="size-5 text-destructive" />
+              <DisconnectedIcon className="size-5 text-destructive" />
             )}
             <p className="-mr-1 font-bold">
               {isConnected ? 'Connected' : 'Disconnected'}
@@ -282,8 +246,8 @@ export default function AutoNav() {
             {connectionMode === 'ble' && (
               <p>
                 (
-                {bt.bluetoothDevice
-                  ? bt.bluetoothDevice.name || bt.bluetoothDevice.id
+                {bluetoothDevice
+                  ? bluetoothDevice.name || bluetoothDevice.id
                   : 'N/A'}
                 )
               </p>
@@ -293,7 +257,7 @@ export default function AutoNav() {
 
         {/* Court selector */}
         <CourtSelector
-          court={bt.court}
+          court={court}
           onSelect={sendSetCourt}
           disabled={!isConnected}
         />
@@ -317,6 +281,30 @@ export default function AutoNav() {
               disabled={!isConnected}
             >
               Auto
+            </Button>
+          </div>
+        </section>
+
+        {/* Yagura correction toggle */}
+        <section className="mb-4 rounded-lg border p-4">
+          <h2 className="mb-3 font-bold text-muted-foreground text-sm">
+            櫓補正
+          </h2>
+          <div className="flex gap-2">
+            <Button
+              variant={yaguraCorrection ? 'default' : 'outline'}
+              className={yaguraCorrection ? 'bg-green-600 hover:bg-green-700' : ''}
+              onClick={() => sendSetYaguraCorrection(true)}
+              disabled={!isConnected}
+            >
+              ON
+            </Button>
+            <Button
+              variant={!yaguraCorrection ? 'default' : 'outline'}
+              onClick={() => sendSetYaguraCorrection(false)}
+              disabled={!isConnected}
+            >
+              OFF
             </Button>
           </div>
         </section>

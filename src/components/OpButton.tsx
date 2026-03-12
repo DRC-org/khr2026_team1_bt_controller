@@ -2,7 +2,6 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import type { ComponentProps } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { sendJsonData } from '@/logics/bluetooth';
 
 const opButtonVariants = cva('h-24 w-full pointer-events-auto', {
   variants: {
@@ -18,7 +17,7 @@ export default function OpButton({
   hid,
   control_type,
   action,
-  characteristic,
+  sendJson,
   className,
   ...props
 }: ComponentProps<typeof Button> &
@@ -27,24 +26,19 @@ export default function OpButton({
     hid: number;
     control_type: 'pos' | 'state';
     action: string;
-    characteristic: BluetoothRemoteGATTCharacteristic | undefined;
+    sendJson: (data: unknown) => void;
   }) {
   function sendHandCommand(
     target: string,
     control_type: string,
     action: string,
   ) {
-    if (!characteristic) return;
-
-    sendJsonData(
-      {
-        type: 'hand_control',
-        target: `${target}_${hid}`,
-        control_type,
-        action,
-      },
-      characteristic,
-    );
+    sendJson({
+      type: 'hand_control',
+      target: `${target}_${hid}`,
+      control_type,
+      action,
+    });
   }
 
   return (

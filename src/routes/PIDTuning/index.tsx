@@ -4,12 +4,11 @@ import {
   StreamingPlugin,
 } from '@nckrtl/chartjs-plugin-streaming';
 import { Chart as ChartJS, registerables } from 'chart.js';
-import { BluetoothConnected, BluetoothOff } from 'lucide-react';
+import { BluetoothConnected, BluetoothOff, Wifi, WifiOff } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
-import { sendJsonData } from '@/logics/bluetooth';
 import { MotorSelector } from './MotorSelector';
 import { PIDGainControls } from './PIDGainControls';
 import { SmallChart } from './SmallChart';
@@ -23,16 +22,17 @@ export default function PIDTuning() {
   const [currentGains, setCurrentGains] = useState<PIDGains | undefined>();
 
   const {
+    connectionMode,
     bluetoothDevice,
-    isDeviceConnected,
-    bluetoothTxCharacteristic,
-    onMessage,
-    searchDevice,
+    isConnected,
+    sendJson,
+    connect,
     disconnect,
+    addMessageListener,
   } = useAppContext();
 
   const { chartRefs, chartData, chartOptions, clearAllCharts, debugStats } =
-    usePIDCharts(onMessage, isDeviceConnected, selectedMotor, setCurrentGains);
+    usePIDCharts(addMessageListener, isConnected, selectedMotor, setCurrentGains);
 
   const handleMotorChange = (motor: MotorKey) => {
     clearAllCharts();
@@ -41,43 +41,36 @@ export default function PIDTuning() {
 
   const handleGainsChange = useCallback(
     async (gains: PIDGains) => {
-      if (!bluetoothTxCharacteristic) {
-        console.error('Bluetooth not connected');
+      if (!isConnected) {
+        console.error('Not connected');
         return;
       }
-
       const command = {
         type: 'pid_gains',
         kp: gains.kp,
         ki: gains.ki,
         kd: gains.kd,
       };
-
-      sendJsonData(command, bluetoothTxCharacteristic);
+      sendJson(command);
       console.log('PID gains sent:', command);
     },
-    [bluetoothTxCharacteristic],
+    [isConnected, sendJson],
   );
 
   useEffect(() => {
-    if (!bluetoothTxCharacteristic) return;
-
-    sendJsonData(
-      {
-        type: 'set_telemetry',
-        enable_pid: true,
-        target_motor: selectedMotor,
-      },
-      bluetoothTxCharacteristic,
-    );
-
+    if (!isConnected) return;
+    sendJson({
+      type: 'set_telemetry',
+      enable_pid: true,
+      target_motor: selectedMotor,
+    });
     return () => {
-      sendJsonData(
-        { type: 'set_telemetry', enable_pid: false },
-        bluetoothTxCharacteristic,
-      );
+      sendJson({ type: 'set_telemetry', enable_pid: false });
     };
-  }, [selectedMotor, bluetoothTxCharacteristic]);
+  }, [selectedMotor, isConnected, sendJson]);
+
+  const ConnectedIcon = connectionMode === 'ws' ? Wifi : BluetoothConnected;
+  const DisconnectedIcon = connectionMode === 'ws' ? WifiOff : BluetoothOff;
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -85,23 +78,25 @@ export default function PIDTuning() {
         <Button
           variant="secondary"
           className="relative z-10 w-fit font-normal"
-          onClick={isDeviceConnected ? disconnect : searchDevice}
+          onClick={isConnected ? disconnect : connect}
         >
-          {isDeviceConnected ? (
-            <BluetoothConnected className="text-green-600" />
+          {isConnected ? (
+            <ConnectedIcon className="text-green-600" />
           ) : (
-            <BluetoothOff className="size-5 text-destructive" />
+            <DisconnectedIcon className="size-5 text-destructive" />
           )}
           <p className="-mr-1 font-bold">
-            {isDeviceConnected ? 'Connected' : 'Disconnected'}
+            {isConnected ? 'Connected' : 'Disconnected'}
           </p>
-          <p>
-            (
-            {bluetoothDevice
-              ? bluetoothDevice.name || bluetoothDevice.id
-              : 'N/A'}
-            )
-          </p>
+          {connectionMode === 'ble' && (
+            <p>
+              (
+              {bluetoothDevice
+                ? bluetoothDevice.name || bluetoothDevice.id
+                : 'N/A'}
+              )
+            </p>
+          )}
         </Button>
 
         <MotorSelector
@@ -114,7 +109,7 @@ export default function PIDTuning() {
       <PIDGainControls
         onGainsChange={handleGainsChange}
         currentGains={currentGains}
-        disabled={!isDeviceConnected}
+        disabled={!isConnected}
       />
 
       {/* Debug Stats */}

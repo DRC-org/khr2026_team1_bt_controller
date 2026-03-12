@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { useHealthStatus } from '@/hooks/useHealthStatus';
-import { sendJsonData } from '@/logics/bluetooth';
 
 function StatusDot({
   label,
@@ -28,20 +27,12 @@ function StatusDot({
 }
 
 export function HealthBar() {
-  const { bluetoothTxCharacteristic, isWsConnected, wsSendRef } =
-    useAppContext();
+  const { isConnected, sendJson } = useAppContext();
   const health = useHealthStatus();
 
-  const canSend = !!bluetoothTxCharacteristic || isWsConnected;
-
   const handleHealthCheck = useCallback(() => {
-    const payload = { type: 'health_check' };
-    if (bluetoothTxCharacteristic) {
-      sendJsonData(payload, bluetoothTxCharacteristic);
-    } else if (wsSendRef.current) {
-      wsSendRef.current(payload);
-    }
-  }, [bluetoothTxCharacteristic, wsSendRef]);
+    sendJson({ type: 'health_check' });
+  }, [sendJson]);
 
   const resultLabel =
     health.hcResult === 'ok'
@@ -94,7 +85,7 @@ export function HealthBar() {
           variant="outline"
           className="h-7 gap-1 px-2 text-xs"
           onClick={handleHealthCheck}
-          disabled={health.hcRunning || !canSend}
+          disabled={health.hcRunning || !isConnected}
         >
           <Activity className="size-3.5" />
           HC

@@ -8,36 +8,22 @@ import {
   Dice1,
   Dice2,
   Dice3,
+  Gamepad2,
   Maximize2,
   Minimize2,
   RotateCcw,
   Square,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import FieldSvg from '@/assets/khr2026_field.svg';
 import KumaSvg from '@/assets/kuma.svg';
 import OpButton from '@/components/OpButton';
-// import JoystickFields from '@/components/JoystickFields';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { useDisableContextMenu } from '@/hooks/useDisableContextMenu';
 import { useJoystickFields } from '@/hooks/useJoystickFields';
-import { sendJsonData } from '@/logics/bluetooth';
-
-function useSendNavModeOnMount(
-  isConnected: boolean,
-  characteristic: BluetoothRemoteGATTCharacteristic | undefined,
-  mode: 'manual' | 'auto',
-) {
-  const sentRef = useRef(false);
-  useEffect(() => {
-    if (isConnected && characteristic && !sentRef.current) {
-      sendJsonData({ type: 'nav_mode', mode }, characteristic);
-      sentRef.current = true;
-    }
-    if (!isConnected) sentRef.current = false;
-  }, [isConnected, characteristic, mode]);
-}
 
 export default function Controller() {
   const [robotPosX, setRobotPosX] = useState(388);
@@ -45,50 +31,44 @@ export default function Controller() {
   const [robotAngle, setRobotAngle] = useState(0);
   const [vgoalLed, setVgoalLed] = useState(false);
   const [errorLed, setErrorLed] = useState(false);
+  const [joystickEnabled, setJoystickEnabled] = useState(true);
 
   const {
+    connectionMode,
     bluetoothDevice,
-    isDeviceConnected,
-    bluetoothTxCharacteristic,
-    onMessage,
-    searchDevice,
+    isConnected,
+    sendJson,
+    connect,
     disconnect,
     court,
     setCourt,
+    addMessageListener,
   } = useAppContext();
 
-  const btCharRef = useRef(bluetoothTxCharacteristic);
-  useEffect(() => {
-    btCharRef.current = bluetoothTxCharacteristic;
-  }, [bluetoothTxCharacteristic]);
-
-  const handleCourtSelect = useCallback((c: 'blue' | 'red') => {
-    setCourt(c);
-    if (btCharRef.current) {
-      sendJsonData({ type: 'set_court', court: c }, btCharRef.current);
-    }
-  }, []);
-
   const {
-    // joystickLFields,
     setJoystickLFields,
-    // joystickRFields,
     setJoystickRFields,
   } = useJoystickFields((joystickLFields, joystickRFields) => {
-    if (bluetoothTxCharacteristic === undefined) return;
-
-    // 青コートはロボットが南向きのため、北を前にするために l_x・l_y を反転
+    if (!isConnected || !joystickEnabled) return;
     const sign = court === 'blue' ? -1 : 1;
-    const txData = {
+    sendJson({
       type: 'joystick',
       l_x: sign * joystickLFields.x,
       l_y: sign * joystickLFields.y,
       r: joystickRFields.x,
-    };
-    sendJsonData(txData, bluetoothTxCharacteristic);
+    });
   });
 
-  useSendNavModeOnMount(isDeviceConnected, bluetoothTxCharacteristic, 'manual');
+  // ページ表示時に manual モードへ切り替え
+  const sentRef = useRef(false);
+  useEffect(() => {
+    if (isConnected && !sentRef.current) {
+      sendJson({ type: 'nav_mode', mode: 'manual' });
+      sentRef.current = true;
+    }
+    if (!isConnected) sentRef.current = false;
+  }, [isConnected, sendJson]);
+
   useDisableContextMenu();
 
   useEffect(() => {
@@ -149,32 +129,26 @@ export default function Controller() {
   }, []);
 
   useEffect(() => {
-    if (isDeviceConnected) {
-      onMessage(handleMessage);
+    if (isConnected) {
+      return addMessageListener(handleMessage);
     }
-  }, [isDeviceConnected, onMessage, handleMessage]);
+  }, [isConnected, addMessageListener, handleMessage]);
+
+  const handleCourtSelect = useCallback(
+    (c: 'blue' | 'red') => {
+      setCourt(c);
+      sendJson({ type: 'set_court', court: c });
+    },
+    [setCourt, sendJson],
+  );
+
+  const ConnectedIcon =
+    connectionMode === 'ws' ? Wifi : BluetoothConnected;
+  const DisconnectedIcon =
+    connectionMode === 'ws' ? WifiOff : BluetoothOff;
 
   return (
     <div className="h-[calc(100svh-2.5rem)] select-none">
-      {/* <JoystickFields
-        label="left"
-        x={joystickLFields.x.toString()}
-        y={joystickLFields.y.toString()}
-        leveledX={joystickLFields.leveledX.toString()}
-        leveledY={joystickLFields.leveledY.toString()}
-        distance={joystickLFields.distance.toString()}
-        angle={joystickLFields.angle.toString()}
-      />
-      <JoystickFields
-        label="right"
-        x={joystickRFields.x.toString()}
-        y={joystickRFields.y.toString()}
-        leveledX={joystickRFields.leveledX.toString()}
-        leveledY={joystickRFields.leveledY.toString()}
-        distance={joystickRFields.distance.toString()}
-        angle={joystickRFields.angle.toString()}
-      /> */}
-
       <div className="relative z-20 flex items-center gap-2 p-3">
         <Button variant="ghost" size="icon-sm" asChild>
           <a href="#/">
@@ -185,23 +159,25 @@ export default function Controller() {
         <Button
           variant="secondary"
           className="font-normal"
-          onClick={isDeviceConnected ? disconnect : searchDevice}
+          onClick={isConnected ? disconnect : connect}
         >
-          {isDeviceConnected ? (
-            <BluetoothConnected className="text-green-600" />
+          {isConnected ? (
+            <ConnectedIcon className="text-green-600" />
           ) : (
-            <BluetoothOff className="size-5 text-destructive" />
+            <DisconnectedIcon className="size-5 text-destructive" />
           )}
           <p className="-mr-1 font-bold">
-            {isDeviceConnected ? 'Connected' : 'Disconnected'}
+            {isConnected ? 'Connected' : 'Disconnected'}
           </p>
-          <p>
-            (
-            {bluetoothDevice
-              ? bluetoothDevice.name || bluetoothDevice.id
-              : 'N/A'}
-            )
-          </p>
+          {connectionMode === 'ble' && (
+            <p>
+              (
+              {bluetoothDevice
+                ? bluetoothDevice.name || bluetoothDevice.id
+                : 'N/A'}
+              )
+            </p>
+          )}
         </Button>
         <Button
           size="sm"
@@ -226,17 +202,12 @@ export default function Controller() {
           onClick={() => {
             const next = !vgoalLed;
             setVgoalLed(next);
-            if (bluetoothTxCharacteristic) {
-              sendJsonData(
-                {
-                  type: 'hand_control',
-                  target: 'vgoal_led',
-                  control_type: 'state',
-                  action: next ? 'on' : 'off',
-                },
-                bluetoothTxCharacteristic,
-              );
-            }
+            sendJson({
+              type: 'hand_control',
+              target: 'vgoal_led',
+              control_type: 'state',
+              action: next ? 'on' : 'off',
+            });
           }}
         >
           VGoal
@@ -248,17 +219,12 @@ export default function Controller() {
           onClick={() => {
             const next = !errorLed;
             setErrorLed(next);
-            if (bluetoothTxCharacteristic) {
-              sendJsonData(
-                {
-                  type: 'hand_control',
-                  target: 'error_led',
-                  control_type: 'state',
-                  action: next ? 'on' : 'off',
-                },
-                bluetoothTxCharacteristic,
-              );
-            }
+            sendJson({
+              type: 'hand_control',
+              target: 'error_led',
+              control_type: 'state',
+              action: next ? 'on' : 'off',
+            });
           }}
         >
           Error
@@ -267,14 +233,19 @@ export default function Controller() {
           size="sm"
           variant="outline"
           className="bg-purple-600/30 hover:bg-purple-600/50 text-purple-900"
-          onClick={() => {
-            if (bluetoothTxCharacteristic) {
-              sendJsonData({ type: 'hand_reset' }, bluetoothTxCharacteristic);
-            }
-          }}
+          onClick={() => sendJson({ type: 'hand_reset' })}
         >
           <RotateCcw className="size-4" />
           Reset
+        </Button>
+        <Button
+          size="sm"
+          variant={joystickEnabled ? 'default' : 'outline'}
+          className={joystickEnabled ? 'bg-sky-600 hover:bg-sky-700' : 'text-muted-foreground'}
+          onClick={() => setJoystickEnabled((prev) => !prev)}
+        >
+          <Gamepad2 className="size-4" />
+          足回り
         </Button>
       </div>
 
@@ -290,65 +261,30 @@ export default function Controller() {
             </p>
             <div className="flex gap-1.5">
               <div className="flex-1">
-                <OpButton
-                  target="yagura"
-                  hid={1}
-                  control_type="pos"
-                  action="up"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="yagura" hid={1} control_type="pos" action="up" className="h-16" sendJson={sendJson}>
                   <ArrowUp className="size-5" />
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="yagura"
-                  hid={1}
-                  control_type="pos"
-                  action="stopped"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="yagura" hid={1} control_type="pos" action="stopped" className="h-16" sendJson={sendJson}>
                   <Square className="size-4" />
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="yagura"
-                  hid={1}
-                  control_type="pos"
-                  action="down"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="yagura" hid={1} control_type="pos" action="down" className="h-16" sendJson={sendJson}>
                   <ArrowDown className="size-5" />
                 </OpButton>
               </div>
             </div>
             <div className="flex gap-1.5">
               <div className="flex-1">
-                <OpButton
-                  target="yagura"
-                  hid={1}
-                  control_type="state"
-                  action="open"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="yagura" hid={1} control_type="state" action="open" className="h-16" sendJson={sendJson}>
                   <Maximize2 className="size-5" />
                   Open
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="yagura"
-                  hid={1}
-                  control_type="state"
-                  action="close"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="yagura" hid={1} control_type="state" action="close" className="h-16" sendJson={sendJson}>
                   <Minimize2 className="size-5" />
                   Close
                 </OpButton>
@@ -363,39 +299,18 @@ export default function Controller() {
             </p>
             <div className="flex gap-1.5">
               <div className="flex-1">
-                <OpButton
-                  target="ring"
-                  hid={1}
-                  control_type="pos"
-                  action="pickup"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="ring" hid={1} control_type="pos" action="pickup" className="h-16" sendJson={sendJson}>
                   <Dice1 className="size-5" />
                   拾取
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="ring"
-                  hid={1}
-                  control_type="pos"
-                  action="yagura"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="ring" hid={1} control_type="pos" action="yagura" className="h-16" sendJson={sendJson}>
                   <Dice2 className="size-5" />櫓
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="ring"
-                  hid={1}
-                  control_type="pos"
-                  action="honmaru"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="ring" hid={1} control_type="pos" action="honmaru" className="h-16" sendJson={sendJson}>
                   <Dice3 className="size-5" />
                   本丸
                 </OpButton>
@@ -403,27 +318,13 @@ export default function Controller() {
             </div>
             <div className="flex gap-1.5">
               <div className="flex-1">
-                <OpButton
-                  target="ring"
-                  hid={1}
-                  control_type="state"
-                  action="open"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="ring" hid={1} control_type="state" action="open" className="h-16" sendJson={sendJson}>
                   <Maximize2 className="size-5" />
                   Grab
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="ring"
-                  hid={1}
-                  control_type="state"
-                  action="close"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="ring" hid={1} control_type="state" action="close" className="h-16" sendJson={sendJson}>
                   <Minimize2 className="size-5" />
                   Rel.
                 </OpButton>
@@ -445,65 +346,30 @@ export default function Controller() {
             </p>
             <div className="flex gap-1.5">
               <div className="flex-1">
-                <OpButton
-                  target="yagura"
-                  hid={2}
-                  control_type="pos"
-                  action="up"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="yagura" hid={2} control_type="pos" action="up" className="h-16" sendJson={sendJson}>
                   <ArrowUp className="size-5" />
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="yagura"
-                  hid={2}
-                  control_type="pos"
-                  action="stopped"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="yagura" hid={2} control_type="pos" action="stopped" className="h-16" sendJson={sendJson}>
                   <Square className="size-4" />
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="yagura"
-                  hid={2}
-                  control_type="pos"
-                  action="down"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="yagura" hid={2} control_type="pos" action="down" className="h-16" sendJson={sendJson}>
                   <ArrowDown className="size-5" />
                 </OpButton>
               </div>
             </div>
             <div className="flex gap-1.5">
               <div className="flex-1">
-                <OpButton
-                  target="yagura"
-                  hid={2}
-                  control_type="state"
-                  action="open"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="yagura" hid={2} control_type="state" action="open" className="h-16" sendJson={sendJson}>
                   <Maximize2 className="size-5" />
                   Open
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="yagura"
-                  hid={2}
-                  control_type="state"
-                  action="close"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="yagura" hid={2} control_type="state" action="close" className="h-16" sendJson={sendJson}>
                   <Minimize2 className="size-5" />
                   Close
                 </OpButton>
@@ -518,39 +384,18 @@ export default function Controller() {
             </p>
             <div className="flex gap-1.5">
               <div className="flex-1">
-                <OpButton
-                  target="ring"
-                  hid={2}
-                  control_type="pos"
-                  action="pickup"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="ring" hid={2} control_type="pos" action="pickup" className="h-16" sendJson={sendJson}>
                   <Dice1 className="size-5" />
                   拾取
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="ring"
-                  hid={2}
-                  control_type="pos"
-                  action="yagura"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="ring" hid={2} control_type="pos" action="yagura" className="h-16" sendJson={sendJson}>
                   <Dice2 className="size-5" />櫓
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="ring"
-                  hid={2}
-                  control_type="pos"
-                  action="honmaru"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="ring" hid={2} control_type="pos" action="honmaru" className="h-16" sendJson={sendJson}>
                   <Dice3 className="size-5" />
                   本丸
                 </OpButton>
@@ -558,27 +403,13 @@ export default function Controller() {
             </div>
             <div className="flex gap-1.5">
               <div className="flex-1">
-                <OpButton
-                  target="ring"
-                  hid={2}
-                  control_type="state"
-                  action="open"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="ring" hid={2} control_type="state" action="open" className="h-16" sendJson={sendJson}>
                   <Maximize2 className="size-5" />
                   Grab
                 </OpButton>
               </div>
               <div className="flex-1">
-                <OpButton
-                  target="ring"
-                  hid={2}
-                  control_type="state"
-                  action="close"
-                  className="h-16"
-                  characteristic={bluetoothTxCharacteristic}
-                >
+                <OpButton target="ring" hid={2} control_type="state" action="close" className="h-16" sendJson={sendJson}>
                   <Minimize2 className="size-5" />
                   Rel.
                 </OpButton>
