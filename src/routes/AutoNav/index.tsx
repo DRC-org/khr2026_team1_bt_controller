@@ -63,10 +63,12 @@ export default function AutoNav() {
 
   const [wsUrl, setWsUrl] = useState(
     (() => {
+      const isGitHubPages = window.location.hostname.endsWith('.github.io');
+      if (isGitHubPages) {
+        return 'ws://192.168.1.101:8080/ws';
+      }
       const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-      const host = isLocal ? 'localhost' : '192.168.1.101';
-      return `${scheme}://${host}:8080/ws`;
+      return `${scheme}://${window.location.host}/ws`;
     })(),
   );
 

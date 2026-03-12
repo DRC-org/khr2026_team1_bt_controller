@@ -53,11 +53,12 @@ const bleDebug = {
   lastLogTime: performance.now(),
 };
 
-const AUTO_RECONNECT_MAX_ATTEMPTS = 5;
-const AUTO_RECONNECT_BASE_DELAY_MS = 500;
+const AUTO_RECONNECT_MAX_ATTEMPTS = 10;
+const AUTO_RECONNECT_BASE_DELAY_MS = 300;
+const AUTO_RECONNECT_MAX_DELAY_MS = 5_000;
 const CONNECTION_TIMEOUT_MS = 10_000;
-// BLE通知が途絶えた場合に切断と判定するまでの時間
-const WATCHDOG_TIMEOUT_MS = 3_000;
+// BLE通知が途絶えた場合に切断と判定するまでの時間（混線環境では通知遅延が発生しうる）
+const WATCHDOG_TIMEOUT_MS = 6_000;
 
 function loadCourt(): Court {
   const stored = localStorage.getItem('drc_court');
@@ -243,7 +244,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           break;
         }
 
-        const delay = AUTO_RECONNECT_BASE_DELAY_MS * 2 ** attempt;
+        const delay = Math.min(
+          AUTO_RECONNECT_BASE_DELAY_MS * 2 ** attempt,
+          AUTO_RECONNECT_MAX_DELAY_MS,
+        );
         console.log(
           `[BLE] Auto-reconnect attempt ${attempt + 1}/${AUTO_RECONNECT_MAX_ATTEMPTS} in ${delay}ms`,
         );

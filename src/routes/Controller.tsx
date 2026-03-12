@@ -10,6 +10,7 @@ import {
   Dice3,
   Maximize2,
   Minimize2,
+  RotateCcw,
   Square,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -261,6 +262,19 @@ export default function Controller() {
           }}
         >
           Error
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="bg-purple-600/30 hover:bg-purple-600/50 text-purple-900"
+          onClick={() => {
+            if (bluetoothTxCharacteristic) {
+              sendJsonData({ type: 'hand_reset' }, bluetoothTxCharacteristic);
+            }
+          }}
+        >
+          <RotateCcw className="size-4" />
+          Reset
         </Button>
       </div>
 
